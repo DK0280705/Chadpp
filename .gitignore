@@ -1,0 +1,8 @@
+build
+Release
+Debug
+config.json
+.vscode
+compile_commands.json
+*.pcm
+.cache
