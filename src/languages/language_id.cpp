@@ -66,6 +66,8 @@ std::vector<const char*> langv_id = {
     "Bahasa diperbaharui!",
     "Ping pong!",
     "Kirim perintah ke perintah global",
+    "",
+    "",
     "Hapus pesan",
     "Berapa banyak pesan untuk dihapus (max 100)",
     "Terlalu banyak (max 100)",

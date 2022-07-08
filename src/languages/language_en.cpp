@@ -66,6 +66,8 @@ std::vector<const char*> langv_en = {
     "Language updated!",
     "Ping pong!",
     "Publish to global commands",
+    "",
+    "",
     "Purge messages",
     "How many messages to purge (max 100)",
     "Too many (max 100)",
