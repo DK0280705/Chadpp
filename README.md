@@ -6,7 +6,13 @@ This project is just made for fun.
 
 ## Building
 Linux only.
+Compile with g++ and cmake.
 First, install dependecies below.
+
+On ubuntu/debian like distributions:
+```sh
+    apt install libssl-dev zlib1g-dev libsodium-dev libopus-dev libpqxx-dev libmp3lame-dev
+```
 
 Then clone this repo.
 ```
@@ -14,6 +20,7 @@ Then clone this repo.
     cd chadpp
     git submodule update --init --recursive
 ```
+
 Create `config.json` file with your favorite editor.
 ```json
 {
@@ -25,15 +32,14 @@ Create `config.json` file with your favorite editor.
 }
 ```
 
-Then configure cmake, you can use GNU make if you want.
+Then configure cmake. You can replace Ninja with GNU make.
 ```
     cmake -DCMAKE_BUILD_TYPE=Release -GNinja -B ./build
 ```
 Compile with:
 ```
-    cmake --build ./build -jN
+    cmake --build ./build -j$(nproc)
 ```
-Replace N with your number of processor cores.
 
 Then run your bot:
 ```
