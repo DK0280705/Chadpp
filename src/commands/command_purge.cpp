@@ -11,7 +11,7 @@ Command_purge::Command_purge()
 
 void Command_purge::call(const Input& input) const
 {
-    short count = static_cast<short>(std::get<int64_t>(input[0]));
+    short count = std::get<int64_t>(input[0]);
 
     int succ = (count > 100)  ? COMMAND_PURGE_INVALID_PARAM_MAX
                : (count == 0) ? COMMAND_PURGE_INVALID_PARAM_ZERO

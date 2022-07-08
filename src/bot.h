@@ -1,5 +1,4 @@
 #pragma once
-#include "language.h"
 #include <dpp/cluster.h>
 #include <fstream>
 
@@ -90,6 +89,7 @@ public:
     mutable std::shared_mutex app_mutex;
     mutable std::shared_mutex cmd_mutex;
     mutable std::shared_mutex lang_mutex;
+    mutable std::shared_mutex voice_mutex;
 
     /**
      * @brief Creates vector of slashcommands from commands.

@@ -1,5 +1,6 @@
 #pragma once
 #include "../bot.h"
+#include "../language.h"
 
 // WTF is this macro
 

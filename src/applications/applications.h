@@ -2,6 +2,7 @@
 #include "../application.h"
 #include "../bot.h"
 #include "../input.h"
+#include "../language.h"
 
 extern Bot* bot;
 

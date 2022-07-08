@@ -3,6 +3,7 @@
 #include "command.h"
 #include "database.h"
 #include "input.h"
+#include "language.h"
 #include "logger.h"
 #include "module.h"
 #include <dlfcn.h>
@@ -91,6 +92,7 @@ std::vector<dpp::slashcommand> Bot::build_slashcommands() const
     std::vector<dpp::slashcommand> s_cmds;
 
     for (const auto&[name, c_ptr] : commands) {
+        if (c_ptr->owner_only) continue;
         dpp::slashcommand cmd = dpp::slashcommand()
             .set_name(name)
             .set_description(_(0, c_ptr->desc_id));

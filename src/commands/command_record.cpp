@@ -41,6 +41,8 @@ void Command_record::call(const Input& input) const
             if (vsi != vc_members.end()) {
                 input.reply(_(gl, COMMAND_RECORD_START));
                 vsi->second.shard->connect_voice(input->guild_id, vsi->second.channel_id);
+
+                std::unique_lock lock(bot->voice_mutex);
                 bot->stream_files.emplace(vsi->second.channel_id,
                                           std::to_string(vsi->second.channel_id) + ".pcm");
                 return;
@@ -57,8 +59,11 @@ void Command_record::call(const Input& input) const
                 return input.reply(_(gl, COMMAND_RECORD_USR_DIFF_VC));
 
             const dpp::snowflake ch_id = vc->channel_id;
-            bot->stream_files.at(ch_id).close();
-            bot->stream_files.erase(ch_id);
+            {
+                std::unique_lock lock(bot->voice_mutex);
+                bot->stream_files.at(ch_id).close();
+                bot->stream_files.erase(ch_id);
+            }
 
             input->client->disconnect_voice(input->guild_id);
 
@@ -97,7 +102,7 @@ void Command_record::call(const Input& input) const
             lame_close(lame);
 
             dpp::message m = dpp::message(input->channel_id, _(gl, COMMAND_RECORD_STOP))
-                                 .add_file("recording.mp3", dpp::utility::read_file(mp3_f));
+                .add_file("recording.mp3", dpp::utility::read_file(mp3_f));
             input.edit_reply(m);
 
             if (std::filesystem::remove(pcm_f) && std::filesystem::remove(mp3_f))

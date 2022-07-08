@@ -1,6 +1,5 @@
 #pragma once
 #include "bot.h"
-#include <mutex>
 
 #define DEFAULT_COLLECTOR_TIMEOUT 60
 
