@@ -29,7 +29,7 @@ void Command_reddit::call(const Input& input) const
                                                        : res_json["data"]["children"][0];
             
             if (children.is_null())
-                return input.edit_reply(_(bot->g_lang(input->guild_id), CMD_ERR_REQUEST_NOT_FOUND));
+                return input.edit_reply(_(input->gl, CMD_ERR_REQUEST_NOT_FOUND));
             
             const json& data = children["data"];
             dpp::embed e = dpp::embed()
@@ -49,11 +49,11 @@ void Command_reddit::call(const Input& input) const
                 dpp::channel* c = dpp::find_channel(input->channel_id);
                 if (!c->is_nsfw())
                     return input.edit_reply(
-                        _(bot->g_lang(input->guild_id), COMMAND_REDDIT_GOT_NSFW));
+                        _(input->gl, COMMAND_REDDIT_GOT_NSFW));
             }
             input.edit_reply(e);
         } else if (res.status == 403)
-            input.edit_reply(_(bot->g_lang(input->guild_id), CMD_ERR_REQUEST_NOT_FOUND));
-        else input.edit_reply(_(bot->g_lang(input->guild_id), CMD_ERR_CONN_FAILURE));
+            input.edit_reply(_(input->gl, CMD_ERR_REQUEST_NOT_FOUND));
+        else input.edit_reply(_(input->gl, CMD_ERR_CONN_FAILURE));
     });
 }

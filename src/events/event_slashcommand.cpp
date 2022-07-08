@@ -96,7 +96,7 @@ void event_slashcommand(const dpp::slashcommand_t& event)
             Input input(bot, event.from, options, event.command);
             int errh = bot->handle_command(c, input);
             if (errh == 0) bot->execute_cmd(c, input);
-            else input.reply(_(bot->g_lang(input->guild_id), errh));
+            else input.reply(_(input->gl, errh));
         } else event.reply(_(bot->g_lang(event.command.guild_id), err));
     } else [[unlikely]] {
         lock.unlock();

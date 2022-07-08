@@ -19,6 +19,9 @@ struct Input_data
     dpp::guild_member member;
     dpp::discord_client* client;
 
+    // Guild language 
+    int gl;
+
     // Can behave as message id or interaction id
     mutable dpp::snowflake id = 0;
     std::string token;
@@ -41,9 +44,9 @@ public:
     Input(const Input& i) noexcept;
     ~Input();
 
-    inline dpp::command_parameter& operator[](const int i) const { return _data->args.at(i); }
+    inline const dpp::command_parameter& operator[](const int i) const { return _data->args.at(i); }
     inline bool has(const int i) const { return _data->args.contains(i); }
-    inline Input_data* operator->() const { return _data; }
+    inline const Input_data* operator->() const { return _data; }
 
     /**
      * @brief Defer to an interaction or response it as typing.

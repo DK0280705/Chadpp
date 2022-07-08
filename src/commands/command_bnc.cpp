@@ -137,8 +137,6 @@ Command_bnc::Command_bnc()
 
 void Command_bnc::call(const Input& input) const
 {
-    int gl = bot->g_lang(input->guild_id);
-
     const int length = input.has(0) ? std::get<int64_t>(input[0]) : 4;
     const int tries  = input.has(1) ? std::get<int64_t>(input[1]) : 10;
 
@@ -147,8 +145,8 @@ void Command_bnc::call(const Input& input) const
                : (tries > 20)            ? COMMAND_BNC_INVALID_PARAM2
                                          : NOTHING;
 
-    if (succ != 0) return input.reply(_(gl, succ));
+    if (succ != 0) return input.reply(_(input->gl, succ));
 
     bot->add_message_collector(input->channel_id,
-                               new Bulls_and_cows(bot, gl, input, length, tries));
+                               new Bulls_and_cows(bot, input->gl, input, length, tries));
 }

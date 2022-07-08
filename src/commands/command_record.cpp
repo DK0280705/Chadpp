@@ -24,7 +24,7 @@ void Command_record::call(const Input& input) const
     // I want to get the voice channel id.
     int64_t sub = std::get<int64_t>(input[0]);
 
-    int gl = bot->g_lang(input->guild_id);
+    int gl = input->gl;
 
     if (sub == 0) {
         if (input->client->get_voice(input->guild_id))

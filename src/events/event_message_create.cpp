@@ -232,7 +232,7 @@ void event_message_create(const dpp::message_create_t& event)
             Input input(bot, event.from, options, event.msg);
             int errh = bot->handle_command(c, input);
             if (errh == 0) bot->execute_cmd(c, input);
-            else input.reply(_(bot->g_lang(input->guild_id), errh));
+            else input.reply(_(input->gl, errh));
         } else event.reply(_(bot->g_lang(event.msg.guild_id), err));
     }
 }

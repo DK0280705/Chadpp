@@ -23,22 +23,20 @@ void Application_help::call(const Input& input) const
         }
     }();
 
-    int gl = bot->g_lang(input->guild_id);
-
     std::string cmd_list;
     {
         std::shared_lock lock(bot->cmd_mutex);
         for (const auto&[n, c] : bot->commands)
           if (c->category == cat)
                 cmd_list += "> `" + bot->default_prefix + n + "` - " +
-                            _(gl, c->desc_id) + "\n";
+                            _(input->gl, c->desc_id) + "\n";
     }
 
     dpp::embed e = dpp::embed()
         .set_title(title)
         .set_color(c_gray)
         .set_thumbnail(bot->me.get_avatar_url())
-        .set_footer({_(gl, COMMAND_HELP_EMBED_FOOTER),
+        .set_footer({_(input->gl, COMMAND_HELP_EMBED_FOOTER),
                      bot->me.get_avatar_url(), {}});
 
     dpp::component c = dpp::component()
@@ -46,14 +44,14 @@ void Application_help::call(const Input& input) const
         .set_id("help")
         .set_min_values(1)
         .set_max_values(1)
-        .set_placeholder(_(gl, COMMAND_HELP_COMP_SELECT_CAT))
-        .add_select_option(dpp::select_option("General", "0", _(gl, COMMAND_HELP_COMP_CAT_GENERAL)))
-        .add_select_option(dpp::select_option("Fun", "1", _(gl, COMMAND_HELP_COMP_CAT_FUN)))
-        .add_select_option(dpp::select_option("Utility", "2", _(gl, COMMAND_HELP_COMP_CAT_UTILITY)))
-        .add_select_option(dpp::select_option("Owner", "3", _(gl, COMMAND_HELP_COMP_CAT_OWNER)));
+        .set_placeholder(_(input->gl, COMMAND_HELP_COMP_SELECT_CAT))
+        .add_select_option(dpp::select_option("General", "0", _(input->gl, COMMAND_HELP_COMP_CAT_GENERAL)))
+        .add_select_option(dpp::select_option("Fun", "1", _(input->gl, COMMAND_HELP_COMP_CAT_FUN)))
+        .add_select_option(dpp::select_option("Utility", "2", _(input->gl, COMMAND_HELP_COMP_CAT_UTILITY)))
+        .add_select_option(dpp::select_option("Owner", "3", _(input->gl, COMMAND_HELP_COMP_CAT_OWNER)));
 
-    if (cmd_list.empty()) e.set_description(_(gl, APPLICATION_HELP_EMPTY_CAT));
-    else e.add_field(_(gl, APPLICATION_HELP_CMD_LIST), cmd_list);
+    if (cmd_list.empty()) e.set_description(_(input->gl, APPLICATION_HELP_EMPTY_CAT));
+    else e.add_field(_(input->gl, APPLICATION_HELP_CMD_LIST), cmd_list);
     
     input.reply(dpp::message(0, e).add_component(dpp::component().add_component(c)),
                       dpp::ir_update_message);

@@ -18,7 +18,7 @@ void Command_purge::call(const Input& input) const
                : (count == 1) ? COMMAND_PURGE_INVALID_PARAM_ONE
                               : NOTHING;
 
-    if (succ != 0) return input.reply(_(bot->g_lang(input->guild_id), succ));
+    if (succ != 0) return input.reply(_(input->gl, succ));
 
     if (input->id == 0) bot->message_delete(input->message_id, input->channel_id);
     else input.reply(dpp::message(0, "Done").set_flags(dpp::m_ephemeral));

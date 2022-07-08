@@ -8,7 +8,7 @@ Input::Input(Bot* bot,
     : _bot(bot), _data(new Input_data), _counter(new short int(0))
 {
     *_data = {std::move(args), msg.channel_id, msg.guild_id, msg.id,
-              msg.author,      msg.member,     client};
+              msg.author,      msg.member,     client,       bot->g_lang(msg.guild_id)};
 }
 
 Input::Input(Bot* bot,
@@ -17,8 +17,9 @@ Input::Input(Bot* bot,
              const dpp::interaction& itr) noexcept
     : _bot(bot), _data(new Input_data), _counter(new short int(0)), _itr(true)
 {
-    *_data = {std::move(args), itr.channel_id, itr.guild_id, itr.message_id,      itr.usr,
-              itr.member,      client,         itr.id,       std::move(itr.token)};
+    *_data = {std::move(args), itr.channel_id,      itr.guild_id, itr.message_id,
+              itr.usr,         itr.member,          client,       bot->g_lang(itr.guild_id),
+              itr.id,          std::move(itr.token)};
 }
 
 Input::Input(const Input& i) noexcept
