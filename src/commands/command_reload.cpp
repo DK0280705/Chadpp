@@ -16,8 +16,9 @@ void Command_reload::call(const Input& input) const
 {
     const std::string& name = std::get<std::string>(input[0]);
 
-    bool succeed = reload_module(bot, name.c_str());
+    Bot& bot_ = Bot::instance();
+    bool succeed = reload_module(&bot_, name.c_str());
 
     if (!succeed) input.reply(dlerror());
-    else input.reply("Reload success");
+    else input.reply("Reloaded");
 }

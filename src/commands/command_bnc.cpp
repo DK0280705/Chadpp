@@ -7,13 +7,12 @@
 class Bulls_and_cows : public Collector<dpp::message>
 {
 public:
-    Bulls_and_cows(Bot* bot, int gl, const Input& input, int length, int tries)
+    Bulls_and_cows(Bot* bot, const Input& input, int length, int tries)
         : Collector(bot, 60, false, true)
         , _input(input)
         , _length(length)
         , _max_tries(tries)
         , _secret(_length, 0)
-        , _gl(gl)
     {
         index = 1;
         generate_numbers();
@@ -22,7 +21,7 @@ public:
             .set_description(fmt::format("Guess a {} digit number", _length))
             .set_color(c_gray)
             .set_author({_input->author.username, {}, _input->author.get_avatar_url(), {}});
-        _input.reply(_e);
+        _input.reply_sync(_e);
         _e.add_field("Attempts", {}, false);
     }
 
@@ -76,7 +75,7 @@ public:
         if (win) {
             dpp::embed e = dpp::embed()
                 .set_color(c_green)
-                .set_description(fmt::format("<@!{}>, {}", item.author.id, _(_gl, COMMAND_BNC_GAME_WIN)))
+                .set_description(fmt::format("<@!{}>, {}", item.author.id, _(_input->gl, COMMAND_BNC_GAME_WIN)))
                 .set_footer({item.author.username, item.author.get_avatar_url(), {}});
             if (_answers.size() > 1) {
                 uint64_t tryharder = 0;
@@ -86,8 +85,8 @@ public:
                     most_val  = eval & v;
                     tryharder = eval & id;
                 }
-                e.add_field(_(_gl, COMMAND_BNC_GAME_TRYHARDER),
-                            fmt::format("> <@!{}> - {} {}", tryharder, most_val, _(_gl, COMMAND_BNC_GAME_ATTEMPTS)), false);
+                e.add_field(_(_input->gl, COMMAND_BNC_GAME_TRYHARDER),
+                            fmt::format("> <@!{}> - {} {}", tryharder, most_val, _(_input->gl, COMMAND_BNC_GAME_ATTEMPTS)), false);
             }
             bot_->message_create(dpp::message(_input->channel_id, e));
             stop();
@@ -95,7 +94,7 @@ public:
         } else if (_tries == _max_tries) {
             dpp::message m = dpp::message()
                 .set_reference(_input->message_id)
-                .add_embed(dpp::embed().set_title(_(_gl, COMMAND_BNC_GAME_MAX_TRIES_REACHED)));
+                .add_embed(dpp::embed().set_title(_(_input->gl, COMMAND_BNC_GAME_MAX_TRIES_REACHED)));
             m.channel_id = _input->channel_id;
             bot_->message_create(m);
             stop();
@@ -107,7 +106,7 @@ public:
     void on_end(const std::vector<dpp::message>&) override
     {
         _e.set_description(fmt::format("{} `{}`",
-                           _(_gl, COMMAND_BNC_GAME_ENDED), ivectostr(_secret)));
+                           _(_input->gl, COMMAND_BNC_GAME_ENDED), ivectostr(_secret)));
         if (_e.fields[0].value.empty()) _e.fields.clear();
         _input.edit_reply(_e);
         bot_->remove_message_collector(_input->channel_id);
@@ -118,7 +117,6 @@ private:
     size_t _length;
     int _tries = 0;
     int _max_tries;
-    int _gl;    
 
     std::vector<int> _secret;
     std::unordered_map<uint64_t, int> _answers;
@@ -148,5 +146,5 @@ void Command_bnc::call(const Input& input) const
     if (succ != 0) return input.reply(_(input->gl, succ));
 
     bot->add_message_collector(input->channel_id,
-                               new Bulls_and_cows(bot, input->gl, input, length, tries));
+                               new Bulls_and_cows(bot, input, length, tries));
 }
