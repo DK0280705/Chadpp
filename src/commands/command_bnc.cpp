@@ -68,8 +68,6 @@ public:
             _answers.emplace(item.author.id, 1);
         else _answers.at(item.author.id)++;
 
-        _input.edit_reply(_e);
-
         if (win) {
             dpp::embed e = dpp::embed()
                 .set_color(c_green)
@@ -98,6 +96,7 @@ public:
             stop();
             return false;
         }
+        _input.edit_reply(_e);
         return true;
     }
 
