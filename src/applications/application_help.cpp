@@ -5,9 +5,9 @@ Application_help::Application_help() : Application("help") {}
 
 void Application_help::call(const Input& input) const
 {
-    const std::string& value = std::get<std::string>(input[0]);
-    Command_category cat     = static_cast<Command_category>(std::stoi(value));
-
+    const std::string value = std::get<std::string>(input[0]);
+    Command_category cat    = static_cast<Command_category>(std::stoi(value));
+    
     const char* title = [&]() {
         switch (cat) {
         case cat_general:
@@ -18,8 +18,6 @@ void Application_help::call(const Input& input) const
             return "Utility Commands";
         case cat_owner:
             return "Owner Commands";
-        default:
-            __builtin_unreachable();
         }
     }();
 
