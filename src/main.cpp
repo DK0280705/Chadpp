@@ -3,7 +3,6 @@
 #include "logger.h"
 #include "module.h"
 #include <dpp/nlohmann/json.hpp>
-#include <pqxx/pqxx>
 
 constexpr const char* EXIT_MESSAGE = "Terminating...";
 

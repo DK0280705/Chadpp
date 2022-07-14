@@ -15,9 +15,8 @@ void Command_urban::call(const Input& input) const
     std::string query = std::get<std::string>(input[0]);
     std::replace(query.begin(), query.end(), ' ', '+');
     input.defer();
-    bot->request("https://api.urbandictionary.com/v0/define?term=" + query, dpp::m_get,
-                 [input](const dpp::http_request_completion_t& res) {
-        if (res.status == 200) {
+    request("https://api.urbandictionary.com/v0/define?term=" + query, dpp::m_get, input,
+            [](const Input& input, const dpp::http_request_completion_t& res) {
             const json data = json::parse(res.body);
             const json& obj = data.at("list").at(random(0, data.at("list").size() - 1)); 
             
@@ -37,8 +36,5 @@ void Command_urban::call(const Input& input) const
                 .set_footer({fmt::format("👍: {} | 👎: {}", obj.at("thumbs_up").get<int>(),
                                          obj.at("thumbs_down").get<int>()), {}, {}});
             input.edit_reply(e);
-        } else if (res.status == 404)
-            return input.edit_reply(_(bot->g_lang(input->guild_id), CMD_ERR_REQUEST_NOT_FOUND));
-        else return input.edit_reply(_(bot->g_lang(input->guild_id), CMD_ERR_CONN_FAILURE));
     });
 }

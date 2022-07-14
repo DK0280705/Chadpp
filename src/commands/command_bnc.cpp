@@ -4,7 +4,7 @@
 #include <algorithm>
 #include <dpp/fmt/format.h>
 
-class Bulls_and_cows : public Collector<dpp::message>
+class Bulls_and_cows : public Message_collector 
 {
 public:
     Bulls_and_cows(Bot* bot, const Input& input, int length, int tries)
@@ -14,7 +14,6 @@ public:
         , _max_tries(tries)
         , _secret(_length, 0)
     {
-        index = 1;
         generate_numbers();
         _e = dpp::embed()
             .set_title("Bulls and cows")
@@ -75,7 +74,7 @@ public:
         if (win) {
             dpp::embed e = dpp::embed()
                 .set_color(c_green)
-                .set_description(fmt::format("<@!{}>, {}", item.author.id, _(_input->gl, COMMAND_BNC_GAME_WIN)))
+                .set_description(fmt::format("<@!{}>, {}", item.author.id, _(_input->lang_id, COMMAND_BNC_GAME_WIN)))
                 .set_footer({item.author.username, item.author.get_avatar_url(), {}});
             if (_answers.size() > 1) {
                 uint64_t tryharder = 0;
@@ -85,8 +84,8 @@ public:
                     most_val  = eval & v;
                     tryharder = eval & id;
                 }
-                e.add_field(_(_input->gl, COMMAND_BNC_GAME_TRYHARDER),
-                            fmt::format("> <@!{}> - {} {}", tryharder, most_val, _(_input->gl, COMMAND_BNC_GAME_ATTEMPTS)), false);
+                e.add_field(_(_input->lang_id, COMMAND_BNC_GAME_TRYHARDER),
+                            fmt::format("> <@!{}> - {} {}", tryharder, most_val, _(_input->lang_id, COMMAND_BNC_GAME_ATTEMPTS)), false);
             }
             bot_->message_create(dpp::message(_input->channel_id, e));
             stop();
@@ -94,7 +93,7 @@ public:
         } else if (_tries == _max_tries) {
             dpp::message m = dpp::message()
                 .set_reference(_input->message_id)
-                .add_embed(dpp::embed().set_title(_(_input->gl, COMMAND_BNC_GAME_MAX_TRIES_REACHED)));
+                .add_embed(dpp::embed().set_title(_(_input->lang_id, COMMAND_BNC_GAME_MAX_TRIES_REACHED)));
             m.channel_id = _input->channel_id;
             bot_->message_create(m);
             stop();
@@ -106,7 +105,7 @@ public:
     void on_end(const std::vector<dpp::message>&) override
     {
         _e.set_description(fmt::format("{} `{}`",
-                           _(_input->gl, COMMAND_BNC_GAME_ENDED), ivectostr(_secret)));
+                           _(_input->lang_id, COMMAND_BNC_GAME_ENDED), ivectostr(_secret)));
         if (_e.fields[0].value.empty()) _e.fields.clear();
         _input.edit_reply(_e);
         bot_->remove_message_collector(_input->channel_id);
@@ -143,7 +142,7 @@ void Command_bnc::call(const Input& input) const
                : (tries > 20)            ? COMMAND_BNC_INVALID_PARAM2
                                          : NOTHING;
 
-    if (succ != 0) return input.reply(_(input->gl, succ));
+    if (succ != 0) return input.reply(_(input->lang_id, succ));
 
     bot->add_message_collector(input->channel_id,
                                new Bulls_and_cows(bot, input, length, tries));

@@ -27,7 +27,6 @@ public:
         _timer = bot_->start_timer(_Delete {this}, duration_);
     }
 
-    int index = 0;
     mutable std::mutex mutex;
 
     void execute(const T& item)

@@ -19,12 +19,15 @@ struct Input_data
     dpp::guild_member member;
     dpp::discord_client* client;
 
-    // Guild language 
-    int gl;
+    // Guild language id
+    int lang_id;
 
+    bool is_itr;
     // Can behave as message id or interaction id
     mutable dpp::snowflake id = 0;
     std::string token;
+
+    short _ref_count = 0;
 };
 
 /**
@@ -44,9 +47,9 @@ public:
     Input(const Input& i) noexcept;
     ~Input();
 
-    inline const dpp::command_parameter& operator[](const int i) const { return _data->args.at(i); }
-    inline bool has(const int i) const { return _data->args.contains(i); }
-    inline const Input_data* operator->() const { return _data; }
+    const dpp::command_parameter& operator[](const int i) const { return _data->args.at(i); }
+    bool has(const int i) const { return _data->args.contains(i); }
+    const Input_data* operator->() const { return _data; }
 
     /**
      * @brief Defer to an interaction or response it as typing.
@@ -126,6 +129,4 @@ private:
     Bot* _bot;
     Input_data* _data;
     std::mutex _mutex;
-    short int* _counter;
-    bool _itr = false;
 };

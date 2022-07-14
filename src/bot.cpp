@@ -133,11 +133,11 @@ std::unordered_map<int, std::vector<const char*>>& Bot::lang() const
 // Uhh, should i explain here?
 // g_lang does not need mutex as if it modified, cmd_mutex handles it.
 // only commands that uses g_lang, so it will be obvious
-int Bot::g_lang(dpp::snowflake id) const
+int Bot::guild_lang(dpp::snowflake id) const
 {
     std::shared_lock lock(lang_mutex);
-    if (!guild_lang.contains(id)) return 0;
-    else return guild_lang.at(id);
+    if (!guild_lang_list.contains(id)) return 0;
+    else return guild_lang_list.at(id);
 }
 
 int Bot::handle_command(Command* c, const Input& input) const
@@ -170,10 +170,10 @@ void Bot::_setup()
     log_info("BOT", "Setting up"); 
 
     const pqxx::result gs = database.execute_sync("SELECT * FROM chadpp.guild_spam");
-    for (const auto& row : gs) guild_spam.emplace(row[0].as<uint64_t>(), true);
+    for (const auto& row : gs) guild_spam_list.emplace(row[0].as<uint64_t>(), true);
 
     const pqxx::result gl = database.execute_sync("SELECT * FROM chadpp.guild_lang");
-    for (const auto& row : gl) guild_lang.emplace(row[0].as<uint64_t>(), row[1].as<int>()); 
+    for (const auto& row : gl) guild_lang_list.emplace(row[0].as<uint64_t>(), row[1].as<int>()); 
 
     this->guild_bulk_command_create(build_slashcommands(), test_guild_id);
     loaded = true;

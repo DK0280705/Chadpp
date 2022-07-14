@@ -80,7 +80,7 @@ void event_slashcommand(const dpp::slashcommand_t& event)
         if (!res.empty()) {
             bot->database.execute_sync("DELETE FROM chadpp.afk_users WHERE id = " + std::to_string(usr_id));
 
-            bot->message_create(dpp::message(ch_id, _(bot->g_lang(g_id), COMMAND_AFK_REMOVED)));
+            bot->message_create(dpp::message(ch_id, _(bot->guild_lang(g_id), COMMAND_AFK_REMOVED)));
         }
     });
 
@@ -96,11 +96,11 @@ void event_slashcommand(const dpp::slashcommand_t& event)
             Input input(bot, event.from, options, event.command);
             int errh = bot->handle_command(c, input);
             if (errh == 0) bot->execute_cmd(c, input);
-            else input.reply(_(input->gl, errh));
-        } else event.reply(_(bot->g_lang(event.command.guild_id), err));
+            else input.reply(_(input->lang_id, errh));
+        } else event.reply(_(bot->guild_lang(event.command.guild_id), err));
     } else [[unlikely]] {
         lock.unlock();
-        event.reply(dpp::message(0, _(bot->g_lang(event.command.guild_id), CMD_ERR_REMOVED))
+        event.reply(dpp::message(0, _(bot->guild_lang(event.command.guild_id), CMD_ERR_REMOVED))
                         .set_flags(dpp::m_ephemeral));
     }
 }

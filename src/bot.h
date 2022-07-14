@@ -63,10 +63,10 @@ public:
     std::unordered_map<std::string, Application*> applications;
 
     // Spam check enabled guilds
-    std::unordered_map<dpp::snowflake, bool> guild_spam;
+    std::unordered_map<dpp::snowflake, bool> guild_spam_list;
 
     // Guild localization
-    std::unordered_map<dpp::snowflake, int> guild_lang;
+    std::unordered_map<dpp::snowflake, int> guild_lang_list;
 
     // Voice recording streams
     // Channel id -> Audio streams
@@ -119,7 +119,7 @@ public:
      * @brief Get guild language configuration
      * @param id guild id
      */
-    int g_lang(dpp::snowflake id) const; 
+    int guild_lang(dpp::snowflake id) const; 
     
     /**
      * @brief Handle command, reject input that has invalid permissions

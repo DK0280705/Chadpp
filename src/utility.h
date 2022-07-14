@@ -18,7 +18,12 @@ class iconhash;
 
 [[nodiscard]] int random(int from, int to) noexcept;
 
-void request(const std::string& u, dpp::http_method m, const dpp::http_completion_event& cb, short tries = 0);
+typedef void (*req_cb_t)(const class Input&, const dpp::http_request_completion_t&);
+void request(const std::string& u,
+             dpp::http_method m,
+             const class Input& i,
+             const req_cb_t cb,
+             short tries = 0);
 
 void send_webhook(uint64_t channel_id,
                   const std::string& name,

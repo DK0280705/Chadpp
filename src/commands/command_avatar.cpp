@@ -20,10 +20,10 @@ void Command_avatar::call(const Input& input) const
                                                 : ru.member.get_avatar_url(1024);
         }
     }();
-    
+
     dpp::embed e = dpp::embed()
         .set_image(avatar_url)
-        .set_footer({ "Cool.", {}, {} })
+        .set_footer({"Cool.", {}, {}})
         .set_color(c_gray);
     input.reply(e);
 }

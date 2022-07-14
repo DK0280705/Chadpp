@@ -11,7 +11,7 @@ Command_help::Command_help()
     category = cat_general;
 }
 
-static void cmd_opts_pretty(const int guild_lang,
+static void cmd_opts_pretty(int guild_lang,
                             int desc_id,
                             const std::vector<dpp::command_option>& options,
                             std::string& description,
@@ -38,14 +38,14 @@ void Command_help::call(const Input& input) const
 {
     if (input->args.empty()) {
         dpp::embed e = dpp::embed()
-            .set_title(_(input->gl, COMMAND_HELP_EMBED_TITLE))
-            .set_description(_(input->gl, COMMAND_HELP_EMBED_DESC))
+            .set_title(_(input->lang_id, COMMAND_HELP_EMBED_TITLE))
+            .set_description(_(input->lang_id, COMMAND_HELP_EMBED_DESC))
             .set_color(c_gray)
             .set_thumbnail(bot->me.get_avatar_url())
-            .set_footer({_(input->gl, COMMAND_HELP_EMBED_FOOTER),
+            .set_footer({_(input->lang_id, COMMAND_HELP_EMBED_FOOTER),
                          bot->me.get_avatar_url(),
                          {}})
-            .add_field(_(input->gl, INFORMATION), fmt::format("> Author: `DK_028`\n"
+            .add_field(_(input->lang_id, INFORMATION), fmt::format("> Author: `DK_028`\n"
                                                        "> C++ version: `{}`\n"
                                                        "> D++ version: `{}`\n"
                                                        "> Shards: `{}`\n",
@@ -56,15 +56,15 @@ void Command_help::call(const Input& input) const
             .set_id("help")
             .set_min_values(1)
             .set_max_values(1)
-            .set_placeholder(_(input->gl, COMMAND_HELP_COMP_SELECT_CAT))
+            .set_placeholder(_(input->lang_id, COMMAND_HELP_COMP_SELECT_CAT))
             .add_select_option(
-                dpp::select_option("General", "0", _(input->gl, COMMAND_HELP_COMP_CAT_GENERAL)))
+                dpp::select_option("General", "0", _(input->lang_id, COMMAND_HELP_COMP_CAT_GENERAL)))
             .add_select_option(
-                dpp::select_option("Fun", "1", _(input->gl, COMMAND_HELP_COMP_CAT_FUN)))
+                dpp::select_option("Fun", "1", _(input->lang_id, COMMAND_HELP_COMP_CAT_FUN)))
             .add_select_option(
-                dpp::select_option("Utility", "2", _(input->gl, COMMAND_HELP_COMP_CAT_UTILITY)))
+                dpp::select_option("Utility", "2", _(input->lang_id, COMMAND_HELP_COMP_CAT_UTILITY)))
             .add_select_option(
-                dpp::select_option("Owner", "3", _(input->gl, COMMAND_HELP_COMP_CAT_OWNER)));
+                dpp::select_option("Owner", "3", _(input->lang_id, COMMAND_HELP_COMP_CAT_OWNER)));
 
         dpp::message m = dpp::message(input->channel_id, e)
             .add_component(dpp::component()
@@ -73,22 +73,22 @@ void Command_help::call(const Input& input) const
         input.reply(m);
     } else {
         const std::string& c_name = std::get<std::string>(input[0]);
-        Command* c                = bot->find_command(c_name);
+        const Command* c          = bot->find_command(c_name);
         
         if (!c)
             return input.reply(dpp::embed().set_color(c_red).set_description(
-                fmt::vformat(_(input->gl, COMMAND_HELP_CMD_NOT_FOUND), fmt::make_format_args(c_name))));
+                fmt::vformat(_(input->lang_id, COMMAND_HELP_CMD_NOT_FOUND), fmt::make_format_args(c_name))));
 
         std::string options_desc;
         std::string options_field;
-        cmd_opts_pretty(input->gl, c->desc_id, c->options, options_desc, options_field);
+        cmd_opts_pretty(input->lang_id, c->desc_id, c->options, options_desc, options_field);
         dpp::embed e = dpp::embed()
             .set_color(c_gray)
             .set_description(fmt::format("```{}{}{}```", bot->default_prefix,
                                          c->name, options_desc))
-            .add_field(_(input->gl, COMMAND_HELP_CMD_DESC), _(input->gl, c->desc_id));
+            .add_field(_(input->lang_id, COMMAND_HELP_CMD_DESC), _(input->lang_id, c->desc_id));
         
-        if (!c->options.empty()) e.add_field(_(input->gl, COMMAND_HELP_CMD_PARAM), options_field);
+        if (!c->options.empty()) e.add_field(_(input->lang_id, COMMAND_HELP_CMD_PARAM), options_field);
         input.reply(e);
     }
 }

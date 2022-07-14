@@ -5,8 +5,8 @@ Application_help::Application_help() : Application("help") {}
 
 void Application_help::call(const Input& input) const
 {
-    std::string value    = std::get<std::string>(input[0]);
-    Command_category cat = static_cast<Command_category>(std::stoi(value));
+    const std::string& value = std::get<std::string>(input[0]);
+    Command_category cat     = static_cast<Command_category>(std::stoi(value));
 
     const char* title = [&]() {
         switch (cat) {
@@ -19,7 +19,7 @@ void Application_help::call(const Input& input) const
         case cat_owner:
             return "Owner Commands";
         default:
-            return "";
+            __builtin_unreachable();
         }
     }();
 
@@ -29,14 +29,14 @@ void Application_help::call(const Input& input) const
         for (const auto&[n, c] : bot->commands)
           if (c->category == cat)
                 cmd_list += "> `" + bot->default_prefix + n + "` - " +
-                            _(input->gl, c->desc_id) + "\n";
+                            _(input->lang_id, c->desc_id) + "\n";
     }
 
     dpp::embed e = dpp::embed()
         .set_title(title)
         .set_color(c_gray)
         .set_thumbnail(bot->me.get_avatar_url())
-        .set_footer({_(input->gl, COMMAND_HELP_EMBED_FOOTER),
+        .set_footer({_(input->lang_id, COMMAND_HELP_EMBED_FOOTER),
                      bot->me.get_avatar_url(), {}});
 
     dpp::component c = dpp::component()
@@ -44,15 +44,15 @@ void Application_help::call(const Input& input) const
         .set_id("help")
         .set_min_values(1)
         .set_max_values(1)
-        .set_placeholder(_(input->gl, COMMAND_HELP_COMP_SELECT_CAT))
-        .add_select_option(dpp::select_option("General", "0", _(input->gl, COMMAND_HELP_COMP_CAT_GENERAL)))
-        .add_select_option(dpp::select_option("Fun", "1", _(input->gl, COMMAND_HELP_COMP_CAT_FUN)))
-        .add_select_option(dpp::select_option("Utility", "2", _(input->gl, COMMAND_HELP_COMP_CAT_UTILITY)))
-        .add_select_option(dpp::select_option("Owner", "3", _(input->gl, COMMAND_HELP_COMP_CAT_OWNER)));
+        .set_placeholder(_(input->lang_id, COMMAND_HELP_COMP_SELECT_CAT))
+        .add_select_option(dpp::select_option("General", "0", _(input->lang_id, COMMAND_HELP_COMP_CAT_GENERAL)))
+        .add_select_option(dpp::select_option("Fun", "1", _(input->lang_id, COMMAND_HELP_COMP_CAT_FUN)))
+        .add_select_option(dpp::select_option("Utility", "2", _(input->lang_id, COMMAND_HELP_COMP_CAT_UTILITY)))
+        .add_select_option(dpp::select_option("Owner", "3", _(input->lang_id, COMMAND_HELP_COMP_CAT_OWNER)));
 
-    if (cmd_list.empty()) e.set_description(_(input->gl, APPLICATION_HELP_EMPTY_CAT));
-    else e.add_field(_(input->gl, APPLICATION_HELP_CMD_LIST), cmd_list);
-    
+    if (cmd_list.empty()) e.set_description(_(input->lang_id, APPLICATION_HELP_EMPTY_CAT));
+    else e.add_field(_(input->lang_id, APPLICATION_HELP_CMD_LIST), cmd_list);
+
     input.reply(dpp::message(0, e).add_component(dpp::component().add_component(c)),
-                      dpp::ir_update_message);
+                dpp::ir_update_message);
 }

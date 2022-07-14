@@ -21,7 +21,7 @@ extern "C" Module* init(Bot* bot)
     {
         std::unique_lock lock(bot->app_mutex);
         bot->applications = {
-            {"help",    new Application_help()   }
+            {"help", new Application_help()}
         };
     }
 

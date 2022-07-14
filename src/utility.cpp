@@ -1,5 +1,8 @@
 #include "utility.h"
 #include "bot.h"
+#include "input.h"
+#include "language.h"
+#include "logger.h"
 #include <dpp/fmt/format.h>
 #include <random>
 
@@ -38,22 +41,34 @@ int random(int from, int to) noexcept
 struct RequestProxy
 {
     short tries;
-    dpp::http_completion_event cb;
+    Input input;
+    req_cb_t cb;
 
     void operator()(const dpp::http_request_completion_t& res) const
     {
-        if (res.status == 301 || res.status == 302) {
-            request(res.headers.at("location"), dpp::m_get, cb, tries + 1);
-        } else cb(res);
+        switch (res.status) {
+        case 404:
+            input.edit_reply(_(input->lang_id, CMD_ERR_REQUEST_NOT_FOUND));
+        case 301:
+        case 302:
+            request(res.headers.at("location"), dpp::m_get, input, cb, tries + 1);
+        case 200:
+            cb(input, res);
+        default:
+            input.edit_reply(_(input->lang_id, CMD_ERR_CONN_FAILURE));
+            log_err("REQUEST_PROXY", "Err: " + std::to_string(res.status));
+        }
     }
 };
 
 void request(const std::string& u,
              dpp::http_method m,
-             const dpp::http_completion_event& cb,
+             const Input& input,
+             const req_cb_t cb,
              short tries)
 {
-    (tries < 10) ? Bot::instance().request(u, m, RequestProxy {tries, cb})
+    if (!tries) input.defer();
+    (tries < 10) ? Bot::instance().request(u, m, RequestProxy {tries, input, cb})
                  : throw std::runtime_error("Too much redirect");
 }
 

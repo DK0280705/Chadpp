@@ -19,8 +19,8 @@ static void check_spam(Bot* bot, const dpp::message& msg)
     // Spam with official discord client is not possible, but, self bot may be possible.
     // Still need more research.
     std::unique_lock lock(spam_mutex);
-    const auto gs_it = bot->guild_spam.find(msg.guild_id);
-    if (gs_it != bot->guild_spam.end()) {
+    const auto gs_it = bot->guild_spam_list.find(msg.guild_id);
+    if (gs_it != bot->guild_spam_list.end()) {
         const uint64_t now = static_cast<uint64_t>(dpp::utility::time_f());
         const auto m_it    = member_spam.find(msg.author.id);
         if (m_it != member_spam.end()) {
@@ -196,14 +196,14 @@ void event_message_create(const dpp::message_create_t& event)
         if (!res.empty()) {
             bot->database.execute_sync("DELETE FROM chadpp.afk_users WHERE id = " +
                                        pqxx::to_string(a_id));
-            bot->message_create(dpp::message(ch_id, _(bot->g_lang(g_id), COMMAND_AFK_REMOVED)));
+            bot->message_create(dpp::message(ch_id, _(bot->guild_lang(g_id), COMMAND_AFK_REMOVED)));
         }
         for (const auto& m : mentions) {
             const pqxx::result res = bot->database.execute_sync("EXECUTE find_afk_user(" +
                                                                 std::to_string(m.first.id) + ")");
             if (!res.empty()) {
                 dpp::embed e = dpp::embed().set_color(c_gray).set_description(
-                    fmt::vformat(_(bot->g_lang(g_id), COMMAND_AFK_PINGED),
+                    fmt::vformat(_(bot->guild_lang(g_id), COMMAND_AFK_PINGED),
                                  fmt::make_format_args(m.first.id, res[2][0].c_str(),
                                                        res[1][0].c_str())));
                 bot->message_create(dpp::message(ch_id, e));
@@ -232,7 +232,7 @@ void event_message_create(const dpp::message_create_t& event)
             Input input(bot, event.from, options, event.msg);
             int errh = bot->handle_command(c, input);
             if (errh == 0) bot->execute_cmd(c, input);
-            else input.reply(_(input->gl, errh));
-        } else event.reply(_(bot->g_lang(event.msg.guild_id), err));
+            else input.reply(_(input->lang_id, errh));
+        } else event.reply(_(bot->guild_lang(event.msg.guild_id), err));
     }
 }

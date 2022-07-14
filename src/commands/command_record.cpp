@@ -20,19 +20,19 @@ Command_record::Command_record()
 
 void Command_record::call(const Input& input) const
 {
-    // Why not using dpp::guild::connect_member_void()?
-    // I want to get the voice channel id.
-    int64_t sub = std::get<int64_t>(input[0]);
+    int sub = std::get<int64_t>(input[0]);
 
-    int gl = input->gl;
+    int gl = input->lang_id;
 
     if (sub == 0) {
+        // Why not using dpp::guild::connect_member_void()?
+        // I want to get the voice channel id.
         if (input->client->get_voice(input->guild_id))
             return input.reply(_(gl, COMMAND_RECORD_IN_VC));
 
         dpp::guild* g = dpp::find_guild(input->guild_id);
 
-        for (auto& ch_id : g->channels) {
+        for (const auto& ch_id : g->channels) {
             dpp::channel* ch = dpp::find_channel(ch_id);
             if (!ch || (!ch->is_voice_channel() && !ch->is_stage_channel())) continue;
             auto vc_members = ch->get_voice_members();
