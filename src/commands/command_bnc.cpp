@@ -18,8 +18,7 @@ public:
         _e = dpp::embed()
             .set_title("Bulls and cows")
             .set_description(fmt::format("Guess a {} digit number", _length))
-            .set_color(c_gray)
-            .set_author({_input->author.username, {}, _input->author.get_avatar_url(), {}});
+            .set_color(c_gray);
         _input.reply_sync(_e);
         _e.add_field("Attempts", {}, false);
     }
@@ -27,7 +26,7 @@ public:
     void generate_numbers()
     {
         bool arr[10] = {false};
-        for (size_t i = 0; i < _length; i++) {
+        for (int i = 0; i < _length; i++) {
             int num = random(0, 9);
 
             // Repeat if duplicate numbers
@@ -51,25 +50,22 @@ public:
 
         const std::string& ans = item.content;
 
-        size_t bulls = 0;
-        size_t cows  = 0;
+        int bulls = 0;
+        int cows  = 0;
 
-        for (size_t i = 0; i < _length; i++)
+        for (int i = 0; i < _length; i++)
             if ((ans[i] - 48) == _secret[i]) bulls++;
             else if (std::find(_secret.begin(), _secret.end(), (ans[i] - 48)) != _secret.end())
                 cows++;
 
         const bool win = bulls == _secret.size();
-        _e.fields[0].value += fmt::format("{}{} - {} Bulls, {} Cows - <@!{}>",
-                                          _e.fields[0].value.empty() ? "" : "\n",
+        _e.fields[0].value += fmt::format("\n{} - {} Bulls, {} Cows - <@!{}>",
                                           win ? "**" + ans + "**" : "`" + ans + "`", bulls, cows,
                                           item.author.id);
 
         if (_answers.find(item.author.id) == _answers.end())
             _answers.emplace(item.author.id, 1);
         else _answers.at(item.author.id)++;
-
-        _input.edit_reply(_e);
 
         if (win) {
             dpp::embed e = dpp::embed()
@@ -99,6 +95,7 @@ public:
             stop();
             return false;
         }
+        _input.edit_reply(_e);
         return true;
     }
 
@@ -113,7 +110,7 @@ public:
 
 private:
     Input _input;
-    size_t _length;
+    int _length;
     int _tries = 0;
     int _max_tries;
 
