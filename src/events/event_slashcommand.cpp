@@ -33,7 +33,7 @@ static int parse_interaction(const dpp::interaction& itr,
         case dpp::co_user:
         {
             const dpp::snowflake& uid = std::get<dpp::snowflake>(co.value);
-            dpp::user* u              = dpp::find_user(uid);
+            const dpp::user* u        = dpp::find_user(uid);
             if (u) {
                 dpp::resolved_user m;
                 m.user        = *u;
@@ -46,7 +46,7 @@ static int parse_interaction(const dpp::interaction& itr,
         case dpp::co_channel:
         {
             const dpp::snowflake& cid = std::get<dpp::snowflake>(co.value);
-            dpp::channel* _c          = dpp::find_channel(cid);
+            const dpp::channel* _c    = dpp::find_channel(cid);
             if (_c) cp = *_c;
             else return PARSE_ERR_CHANNEL;
             break;
@@ -54,7 +54,7 @@ static int parse_interaction(const dpp::interaction& itr,
         case dpp::co_role:
         {
             const dpp::snowflake& rid = std::get<dpp::snowflake>(co.value);
-            dpp::role* _r             = dpp::find_role(rid);
+            const dpp::role* _r       = dpp::find_role(rid);
             if (_r) cp = *_r;
             else return PARSE_ERR_ROLE;
             break;
@@ -86,21 +86,23 @@ void event_slashcommand(const dpp::slashcommand_t& event)
 
     const dpp::command_interaction& cmd_itr = std::get<dpp::command_interaction>(event.command.data);
 
-
     std::shared_lock lock(bot->cmd_mutex);
     if (Command* c = bot->find_command(cmd_itr.name)) [[likely]] {
         Command_options options;
         
-        int err = parse_interaction(event.command, c->options, cmd_itr.options, options);
-        if (err == 0) {
-            Input input(bot, event.from, options, event.command);
-            int errh = bot->handle_command(c, input);
-            if (errh == 0) bot->execute_cmd(c, input);
-            else input.reply(_(input->lang_id, errh));
-        } else event.reply(_(bot->guild_lang(event.command.guild_id), err));
+        if (int err = parse_interaction(event.command, c->options, cmd_itr.options, options))
+            return event.reply(_(bot->guild_lang(event.command.guild_id), err));
+            
+        Input input(bot, event.from, options, event.command);
+        
+        if (int err = bot->handle_command(c, input))
+            return input.reply(_(input->lang_id, err));
+
+        bot->execute_cmd(c, input);
+
     } else [[unlikely]] {
         lock.unlock();
         event.reply(dpp::message(0, _(bot->guild_lang(event.command.guild_id), CMD_ERR_REMOVED))
-                        .set_flags(dpp::m_ephemeral));
+            .set_flags(dpp::m_ephemeral));
     }
 }

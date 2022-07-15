@@ -28,6 +28,7 @@ struct Input_data
     std::string token;
 
     short _ref_count = 0;
+    std::mutex _mutex;
 };
 
 /**
@@ -128,5 +129,4 @@ public:
 private:
     Bot* _bot;
     Input_data* _data;
-    std::mutex _mutex;
 };

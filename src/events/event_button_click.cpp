@@ -4,8 +4,7 @@
 
 void event_button_click(const dpp::button_click_t& event)
 {
-    const dpp::component_interaction& com_itr = std::get<dpp::component_interaction>(
-        event.command.data);
+    const auto& com_itr = std::get<dpp::component_interaction>(event.command.data);
 
     const std::string app_name = com_itr.custom_id.substr(0, com_itr.custom_id.find('_'));
 
@@ -16,9 +15,10 @@ void event_button_click(const dpp::button_click_t& event)
     std::shared_lock lock(bot->app_mutex);
     const auto app_it = bot->applications.find(app_name);
     if (app_it != bot->applications.end()) {
-        const std::string value    = com_itr.custom_id.substr(app_name.size() + 1);
-        std::string::size_type pos = value.find('_', 0);
-        Command_options args       = {
+        const std::string value = com_itr.custom_id.substr(app_name.size() + 1);
+        const int pos           = value.find('_', 0);
+        
+        Command_options args = {
             {0, value.substr(0, pos)},
             {1, value.substr(pos + 1)}
         };

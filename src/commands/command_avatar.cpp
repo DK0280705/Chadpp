@@ -21,7 +21,7 @@ void Command_avatar::call(const Input& input) const
         }
     }();
 
-    dpp::embed e = dpp::embed()
+    const dpp::embed e = dpp::embed()
         .set_image(avatar_url)
         .set_footer({"Cool.", {}, {}})
         .set_color(c_gray);

@@ -5,27 +5,28 @@ Input::Input(Bot* bot,
              dpp::discord_client* client,
              Command_options& args,
              const dpp::message& msg) noexcept
-    : _bot(bot), _data(new Input_data)
+    : _bot(bot)
+    , _data(new Input_data {std::move(args), msg.channel_id,                msg.guild_id,
+                            msg.id,          msg.author,                    msg.member,
+                            client,          bot->guild_lang(msg.guild_id), false})
 {
-    *_data = {std::move(args), msg.channel_id, msg.guild_id, msg.id,
-              msg.author,      msg.member,     client,       bot->guild_lang(msg.guild_id), false};
 }
 
 Input::Input(Bot* bot,
              dpp::discord_client* client,
              Command_options& args,
              const dpp::interaction& itr) noexcept
-    : _bot(bot), _data(new Input_data)
+    : _bot(bot)
+    , _data(new Input_data {std::move(args), itr.channel_id,                itr.guild_id,
+                            itr.message_id,  itr.usr,                       itr.member,
+                            client,          bot->guild_lang(itr.guild_id), false,
+                            itr.id,          std::move(itr.token)})
 {
-    *_data = {std::move(args), itr.channel_id,      itr.guild_id, itr.message_id,
-              itr.usr,         itr.member,          client,       bot->guild_lang(itr.guild_id),
-              false,           itr.id,              std::move(itr.token)};
 }
 
-Input::Input(const Input& i) noexcept
-    : _bot(i._bot), _data(i._data)
+Input::Input(const Input& i) noexcept : _bot(i._bot), _data(i._data)
 {
-    std::lock_guard lock(_mutex);
+    std::lock_guard lock(_data->_mutex);
     (_data->_ref_count)++;
 }
 
@@ -130,7 +131,7 @@ Input::~Input()
     if ((_data->_ref_count) == 0) {
         delete _data;
     } else {
-        std::lock_guard lock(_mutex);
+        std::lock_guard lock(_data->_mutex);
         (_data->_ref_count)--;
     }
 }

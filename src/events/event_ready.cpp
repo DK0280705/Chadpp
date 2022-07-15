@@ -6,7 +6,7 @@ void event_ready(const dpp::ready_t& event)
     if (event.shard_id == 0) {
         bot->_setup();
 
-        dpp::embed embed = dpp::embed()
+        const dpp::embed embed = dpp::embed()
             .set_title("Im ready mfs")
             .set_color(c_green);
         bot->message_create(dpp::message(bot->botlog_id, embed));

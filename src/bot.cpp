@@ -93,11 +93,11 @@ std::vector<dpp::slashcommand> Bot::build_slashcommands() const
 
     for (const auto&[name, c_ptr] : commands) {
         if (c_ptr->owner_only) continue;
-        dpp::slashcommand cmd = dpp::slashcommand()
-            .set_name(name)
-            .set_description(_(0, c_ptr->desc_id));
+        dpp::slashcommand cmd = dpp::slashcommand(name, _(0, c_ptr->desc_id), me.id);
+        
         cmd.options = c_ptr->options;
         fill_cmd_options(cmd.options, c_ptr->desc_id);
+        
         s_cmds.emplace_back(cmd);
     }
 
@@ -145,7 +145,7 @@ int Bot::handle_command(Command* c, const Input& input) const
     if (c->owner_only && input->author.id != owner_id) return CMD_ERR_OWNER_ONLY;
     
     if (c->nsfw_only) {
-        dpp::channel* ch = dpp::find_channel(input->channel_id);
+        const dpp::channel* ch = dpp::find_channel(input->channel_id);
         if(!ch->is_nsfw()) return CMD_ERR_NSFW_ONLY; 
     }
 
@@ -153,8 +153,8 @@ int Bot::handle_command(Command* c, const Input& input) const
         return CMD_ERR_MESSAGE_COLLECTOR_REJECT;
 
     if (c->permissions) {
-        dpp::channel* ch     = dpp::find_channel(input->channel_id);
-        const uint64_t perms = ch->get_user_permissions(&input->author);
+        const dpp::channel* ch = dpp::find_channel(input->channel_id);
+        const uint64_t perms   = ch->get_user_permissions(&input->author);
         if(!(perms & c->permissions)) return CMD_ERR_NEED_PERMISSION;
     }
 
@@ -186,8 +186,7 @@ void Bot::_cmd_worker()
         cmd_cv.wait(lock, []() { return !cmd_queue.empty() || Bot::terminating; });
         if (Bot::terminating) break;
 
-        log_debug("CMD_WORKER", "queue_size: " + std::to_string(cmd_queue.size()));
-        Input_request ir = cmd_queue.front();
+        const Input_request ir = cmd_queue.front();
         cmd_queue.pop();
 
         lock.unlock();

@@ -21,7 +21,7 @@ void Command_publish::call(const Input& input) const
         bot->global_commands_get([input](const dpp::confirmation_callback_t& cb) {
             const std::string& cmd = std::get<std::string>(input[1]);
             const dpp::slashcommand_map& map = std::get<dpp::slashcommand_map>(cb.value);
-            auto it = std::find_if(map.begin(), map.end(), [&](const auto& sc) {
+            const auto it = std::find_if(map.begin(), map.end(), [&](const auto& sc) {
                 return sc.second.name == cmd;
             });
             if (it == map.end()) return input.reply("bruh");

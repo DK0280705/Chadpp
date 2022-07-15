@@ -227,12 +227,14 @@ void event_message_create(const dpp::message_create_t& event)
     if (Command* c = bot->find_command(cmd_name)) {
         Command_options options;
 
-        int err = parse_message(event.msg, c->options, options, ss);
-        if (err == 0) {
-            Input input(bot, event.from, options, event.msg);
-            int errh = bot->handle_command(c, input);
-            if (errh == 0) bot->execute_cmd(c, input);
-            else input.reply(_(input->lang_id, errh));
-        } else event.reply(_(bot->guild_lang(event.msg.guild_id), err));
+        if (int err = parse_message(event.msg, c->options, options, ss))
+            return event.reply(_(bot->guild_lang(event.msg.guild_id), err));
+        
+        Input input(bot, event.from, options, event.msg);
+
+        if (int err = bot->handle_command(c, input))
+            return input.reply(_(input->lang_id, err));
+
+        bot->execute_cmd(c, input);
     }
 }

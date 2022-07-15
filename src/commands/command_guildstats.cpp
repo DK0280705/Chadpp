@@ -16,15 +16,14 @@ void Command_guildstats::call(const Input& input) const
                                                     pqxx::to_string(input->guild_id) + ")");
 
     std::string active_members;
-    for (pqxx::result::size_type i = 0; i < res.size(); i++) {
-        const pqxx::row& row = res[i];
+    for (const auto& row : res) {
         active_members += fmt::vformat(_(input->lang_id, COMMAND_GUILDSTATS_ACT_MEM_FORMAT),
-                                       fmt::make_format_args(i + 1, row[0].c_str(), row[1].c_str(),
+                                       fmt::make_format_args(row.num(), row[0].c_str(), row[1].c_str(),
                                                              row[2].c_str()));
     }
 
-    dpp::guild* g = dpp::find_guild(input->guild_id);
-    dpp::embed e  = dpp::embed()
+    const dpp::guild* g = dpp::find_guild(input->guild_id);
+    const dpp::embed e  = dpp::embed()
         .set_title(fmt::format("{} Stats", g->name))
         .set_description(g->description)
         .set_color(c_gray)

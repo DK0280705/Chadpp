@@ -110,9 +110,9 @@ public:
 
 private:
     Input _input;
-    int _length;
     int _tries = 0;
-    int _max_tries;
+    const int _length;
+    const int _max_tries;
 
     std::vector<int> _secret;
     std::unordered_map<uint64_t, int> _answers;

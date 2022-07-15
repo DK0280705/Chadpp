@@ -11,14 +11,13 @@ Command_purge::Command_purge()
 
 void Command_purge::call(const Input& input) const
 {
-    short count = std::get<int64_t>(input[0]);
+    const short count = std::get<int64_t>(input[0]);
 
-    int succ = (count > 100)  ? COMMAND_PURGE_INVALID_PARAM_MAX
-               : (count == 0) ? COMMAND_PURGE_INVALID_PARAM_ZERO
-               : (count == 1) ? COMMAND_PURGE_INVALID_PARAM_ONE
-                              : NOTHING;
-
-    if (succ != 0) return input.reply(_(input->lang_id, succ));
+    if (const int s = (count > 100)  ? COMMAND_PURGE_INVALID_PARAM_MAX
+                    : (count == 0)   ? COMMAND_PURGE_INVALID_PARAM_ZERO
+                    : (count == 1)   ? COMMAND_PURGE_INVALID_PARAM_ONE
+                                     : NOTHING)
+        return input.reply(_(input->lang_id, s));
 
     if (!input->is_itr) bot->message_delete(input->message_id, input->channel_id);
     else input.reply(dpp::message(0, "Done").set_flags(dpp::m_ephemeral));

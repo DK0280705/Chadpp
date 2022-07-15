@@ -5,8 +5,8 @@ Application_help::Application_help() : Application("help") {}
 
 void Application_help::call(const Input& input) const
 {
-    const std::string value = std::get<std::string>(input[0]);
-    Command_category cat    = static_cast<Command_category>(std::stoi(value));
+    const std::string& value   = std::get<std::string>(input[0]);
+    const Command_category cat = static_cast<Command_category>(std::stoi(value));
     
     const char* title = [&]() {
         switch (cat) {
@@ -25,7 +25,7 @@ void Application_help::call(const Input& input) const
     {
         std::shared_lock lock(bot->cmd_mutex);
         for (const auto&[n, c] : bot->commands)
-          if (c->category == cat)
+            if (c->category == cat)
                 cmd_list += "> `" + bot->default_prefix + n + "` - " +
                             _(input->lang_id, c->desc_id) + "\n";
     }
@@ -35,9 +35,11 @@ void Application_help::call(const Input& input) const
         .set_color(c_gray)
         .set_thumbnail(bot->me.get_avatar_url())
         .set_footer({_(input->lang_id, COMMAND_HELP_EMBED_FOOTER),
-                     bot->me.get_avatar_url(), {}});
+                    bot->me.get_avatar_url(), {}});
+    if (cmd_list.empty()) e.set_description(_(input->lang_id, APPLICATION_HELP_EMPTY_CAT));
+    else e.add_field(_(input->lang_id, APPLICATION_HELP_CMD_LIST), cmd_list);
 
-    dpp::component c = dpp::component()
+    const dpp::component c = dpp::component()
         .set_type(dpp::cot_selectmenu)
         .set_id("help")
         .set_min_values(1)
@@ -48,8 +50,6 @@ void Application_help::call(const Input& input) const
         .add_select_option(dpp::select_option("Utility", "2", _(input->lang_id, COMMAND_HELP_COMP_CAT_UTILITY)))
         .add_select_option(dpp::select_option("Owner", "3", _(input->lang_id, COMMAND_HELP_COMP_CAT_OWNER)));
 
-    if (cmd_list.empty()) e.set_description(_(input->lang_id, APPLICATION_HELP_EMPTY_CAT));
-    else e.add_field(_(input->lang_id, APPLICATION_HELP_CMD_LIST), cmd_list);
 
     input.reply(dpp::message(0, e).add_component(dpp::component().add_component(c)),
                 dpp::ir_update_message);

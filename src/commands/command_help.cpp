@@ -37,7 +37,7 @@ static void cmd_opts_pretty(int guild_lang,
 void Command_help::call(const Input& input) const
 {
     if (input->args.empty()) {
-        dpp::embed e = dpp::embed()
+        const dpp::embed e = dpp::embed()
             .set_title(_(input->lang_id, COMMAND_HELP_EMBED_TITLE))
             .set_description(_(input->lang_id, COMMAND_HELP_EMBED_DESC))
             .set_color(c_gray)
@@ -51,7 +51,7 @@ void Command_help::call(const Input& input) const
                                                        "> Shards: `{}`\n",
                                                        "CXX20", DPP_VERSION_TEXT,
                                                        bot->get_shards().size()));
-        dpp::component c = dpp::component()
+        const dpp::component c = dpp::component()
             .set_type(dpp::cot_selectmenu)
             .set_id("help")
             .set_min_values(1)
@@ -66,7 +66,7 @@ void Command_help::call(const Input& input) const
             .add_select_option(
                 dpp::select_option("Owner", "3", _(input->lang_id, COMMAND_HELP_COMP_CAT_OWNER)));
 
-        dpp::message m = dpp::message(input->channel_id, e)
+        const dpp::message m = dpp::message(input->channel_id, e)
             .add_component(dpp::component()
                 .add_component(c));
 
@@ -82,13 +82,14 @@ void Command_help::call(const Input& input) const
         std::string options_desc;
         std::string options_field;
         cmd_opts_pretty(input->lang_id, c->desc_id, c->options, options_desc, options_field);
+
         dpp::embed e = dpp::embed()
             .set_color(c_gray)
             .set_description(fmt::format("```{}{}{}```", bot->default_prefix,
                                          c->name, options_desc))
             .add_field(_(input->lang_id, COMMAND_HELP_CMD_DESC), _(input->lang_id, c->desc_id));
-        
         if (!c->options.empty()) e.add_field(_(input->lang_id, COMMAND_HELP_CMD_PARAM), options_field);
+        
         input.reply(e);
     }
 }

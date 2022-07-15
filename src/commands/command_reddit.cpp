@@ -14,21 +14,22 @@ Command_reddit::Command_reddit()
 void Command_reddit::call(const Input& input) const
 {
     const std::string& subreddit = std::get<std::string>(input[0]);
-    
+
     request("https://www.reddit.com/r/" + subreddit + "/random.json", dpp::m_get, input,
             [](const Input& input, const dpp::http_request_completion_t& res) {
-        json res_json;
-        // Error killer
-        try {
-            res_json = json::parse(res.body);
-        } catch (const nlohmann::detail::parse_error&) {}
-        
+        const json res_json = [&]() {
+            // Error killer
+            try {
+                return json::parse(res.body);
+            } catch (const nlohmann::detail::parse_error&) {}
+        }();
+
         const json& children = res_json.is_array() ? res_json[0]["data"]["children"][0]
-                                                    : res_json["data"]["children"][0];
-        
+                                                   : res_json["data"]["children"][0];
+
         if (children.is_null())
             return input.edit_reply(_(input->lang_id, CMD_ERR_REQUEST_NOT_FOUND));
-        
+
         const json& data = children["data"];
         dpp::embed e = dpp::embed()
             .set_title(data.at("title"))
@@ -41,7 +42,6 @@ void Command_reddit::call(const Input& input) const
                                 data["subreddit_subscribers"].get<uint32_t>()),
                     {}, {}})
             .set_author(data.at("author"), "", "");
-        
         if (data.contains("url")) e.set_image(data.at("url"));
         if (data.at("over_18")) {
             dpp::channel* c = dpp::find_channel(input->channel_id);
@@ -49,6 +49,7 @@ void Command_reddit::call(const Input& input) const
                 return input.edit_reply(
                     _(input->lang_id, COMMAND_REDDIT_GOT_NSFW));
         }
+
         input.edit_reply(e);
     });
 }
