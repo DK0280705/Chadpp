@@ -4,7 +4,7 @@
 
 namespace dpp {
 namespace utility {
-class iconhash;
+struct iconhash;
 }
 }
 
