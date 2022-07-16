@@ -108,7 +108,7 @@ void Bot::execute_cmd(Command* cmd, const Input& input)
 {
     {
         std::lock_guard<std::mutex> lock(worker_mutex);
-        cmd_queue.emplace(Input_request{cmd, input});
+        cmd_queue.emplace(cmd, input);
     }
     cmd_cv.notify_one();
 }

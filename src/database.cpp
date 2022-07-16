@@ -59,7 +59,7 @@ void Database::execute(const std::string& query, const Query_completion_callback
 {
     {
         std::lock_guard<std::mutex> lock(mutex);
-        query_queue.emplace(Query_request{query, callback});
+        query_queue.emplace(query, callback);
     }
     cv.notify_one();
 }
