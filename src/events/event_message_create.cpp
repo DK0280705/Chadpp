@@ -9,11 +9,12 @@
 #define SPAM_LIMIT    1
 #define MAX_PENALTIES 5
 
+static std::mutex spam_mutex;
+static std::unordered_map<dpp::snowflake, uint64_t> member_spam;
+static std::unordered_map<dpp::snowflake, uint16_t> spam_penalties;
+
 static void check_spam(Bot* bot, const dpp::message& msg)
 {
-    static std::mutex spam_mutex;
-    static std::unordered_map<dpp::snowflake, uint64_t> member_spam;
-    static std::unordered_map<dpp::snowflake, uint16_t> spam_penalties;
     // Check spam member.
     // I don't know if it even useful or not. It works like rate limiting.
     // Spam with official discord client is not possible, but, self bot may be possible.
@@ -185,14 +186,14 @@ void event_message_create(const dpp::message_create_t& event)
     // Update or insert active users table.
     // It consumes message content length. Sounds like levelling system but more statistically.
     bot->database.execute(fmt::format("EXECUTE upsert_active_user({}, {}, {})",
-                                        event.msg.author.id, event.msg.guild_id,
-                                        event.msg.content.length()));
+                                      event.msg.author.id, event.msg.guild_id,
+                                      event.msg.content.length()));
 
     // Controls whether the user is afk or not.
     bot->database.execute("EXECUTE find_afk_user(" + std::to_string(event.msg.author.id) + ")",
-                            [ch_id = event.msg.channel_id, a_id = event.msg.author.id,
-                             g_id     = event.msg.guild_id,
-                             mentions = event.msg.mentions](const pqxx::result& res) {
+                          [ch_id = event.msg.channel_id, a_id = event.msg.author.id,
+                           g_id     = event.msg.guild_id,
+                           mentions = event.msg.mentions](const pqxx::result& res) {
         if (!res.empty()) {
             bot->database.execute_sync("DELETE FROM chadpp.afk_users WHERE id = " +
                                        pqxx::to_string(a_id));
@@ -202,10 +203,11 @@ void event_message_create(const dpp::message_create_t& event)
             const pqxx::result res = bot->database.execute_sync("EXECUTE find_afk_user(" +
                                                                 std::to_string(m.first.id) + ")");
             if (!res.empty()) {
-                dpp::embed e = dpp::embed().set_color(c_gray).set_description(
-                    fmt::vformat(_(bot->guild_lang(g_id), COMMAND_AFK_PINGED),
-                                 fmt::make_format_args(m.first.id, res[2][0].c_str(),
-                                                       res[1][0].c_str())));
+                const dpp::embed e = dpp::embed()
+                    .set_color(c_gray)
+                    .set_description(fmt::vformat(_(bot->guild_lang(g_id), COMMAND_AFK_PINGED),
+                                                  fmt::make_format_args(m.first.id, res[2][0].c_str(),
+                                                                        res[1][0].c_str())));
                 bot->message_create(dpp::message(ch_id, e));
             }
         }
