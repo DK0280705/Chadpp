@@ -5,7 +5,7 @@ Application_help::Application_help() : Application("help") {}
 
 void Application_help::call(const Input& input) const
 {
-    const std::string& value   = std::get<std::string>(input[0]);
+    const std::string value    = std::get<std::string>(input[0]);
     const Command_category cat = static_cast<Command_category>(std::stoi(value));
     
     const char* title = [&]() {

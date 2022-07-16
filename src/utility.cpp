@@ -48,15 +48,16 @@ struct RequestProxy
     {
         switch (res.status) {
         case 404:
-            input.edit_reply(_(input->lang_id, CMD_ERR_REQUEST_NOT_FOUND));
+            return input.edit_reply(_(input->lang_id, CMD_ERR_REQUEST_NOT_FOUND));
         case 301:
         case 302:
-            request(res.headers.at("location"), dpp::m_get, input, cb, tries + 1);
+            return request(res.headers.at("location"), dpp::m_get, input, cb, tries + 1);
         case 200:
-            cb(input, res);
+            return cb(input, res);
         default:
             input.edit_reply(_(input->lang_id, CMD_ERR_CONN_FAILURE));
             log_err("REQUEST_PROXY", "Err: " + std::to_string(res.status));
+            return;
         }
     }
 };

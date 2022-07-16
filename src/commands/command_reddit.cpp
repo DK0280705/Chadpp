@@ -17,12 +17,11 @@ void Command_reddit::call(const Input& input) const
 
     request("https://www.reddit.com/r/" + subreddit + "/random.json", dpp::m_get, input,
             [](const Input& input, const dpp::http_request_completion_t& res) {
-        const json res_json = [&]() {
-            // Error killer
-            try {
-                return json::parse(res.body);
-            } catch (const nlohmann::detail::parse_error&) {}
-        }();
+        json res_json;
+        // Error killer
+        try {
+            res_json = json::parse(res.body);
+        } catch (const nlohmann::detail::parse_error&) {}
 
         const json& children = res_json.is_array() ? res_json[0]["data"]["children"][0]
                                                    : res_json["data"]["children"][0];
