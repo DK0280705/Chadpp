@@ -84,6 +84,8 @@ endforeach(dir SUBDIRS)
 
 target_link_libraries(commands ${LAME_LIBRARIES})
 
+set_property(GLOBAL PROPERTY RULE_LAUNCH_COMPILE "${CMAKE_COMMAND} -E time")
+
 configure_file("chadpp.sql" "chadpp.sql" COPYONLY)
 configure_file("config.json" "config.json" COPYONLY)
 
