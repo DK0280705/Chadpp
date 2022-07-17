@@ -202,14 +202,12 @@ void Bot::_cmd_worker()
 Bot::~Bot()
 {
     cmd_cv.notify_all();
-    
+
     for (auto& cth : cmd_threads) cth.join();
     
-    log_info("BOT", "Removing collectors");
-    for (auto& dmc : dummy_collectors) dmc.second->stop();
+    for (auto& dmc : dummy_collectors) dmc.second->destroy();
 
-    for (auto& mcl : message_collectors) mcl.second->stop();
+    for (auto& mcl : message_collectors) mcl.second->destroy();
 
-    log_info("BOT", "Unloading modules");
     for (auto& mod : modules) unload_module(this, mod.second);
 }

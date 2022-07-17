@@ -10,8 +10,8 @@ public:
     Bulls_and_cows(Bot* bot, const Input& input, int length, int tries)
         : Collector(bot, 60, false, true)
         , _input(input)
+        , _tries(tries)
         , _length(length)
-        , _max_tries(tries)
         , _secret(_length, 0)
     {
         generate_numbers();
@@ -41,12 +41,12 @@ public:
     bool on_collect(const dpp::message& item) override
     {
         if (item.content == "stop") {
-            stop();
+            terminating = true;
             return false;
         } else if (item.content.size() != _length || !isdigit(item.content)) return false;
         bot_->message_delete(item.id, _input->channel_id);
         
-        _tries++;
+        _tries--;
 
         const std::string& ans = item.content;
 
@@ -74,25 +74,26 @@ public:
                 .set_footer({item.author.username, item.author.get_avatar_url(), {}});
             if (_answers.size() > 1) {
                 uint64_t tryharder = 0;
-                int most_val       = 0;
+                uint16_t most_val  = 0;
                 for (const auto& [id, v] : _answers) {
-                    int eval  = -(v > most_val);
-                    most_val  = eval & v;
-                    tryharder = eval & id;
+                    if (v > most_val) {
+                        most_val  = v;
+                        tryharder = id;
+                    }
                 }
                 e.add_field(_(_input->lang_id, COMMAND_BNC_GAME_TRYHARDER),
                             fmt::format("> <@!{}> - {} {}", tryharder, most_val, _(_input->lang_id, COMMAND_BNC_GAME_ATTEMPTS)), false);
             }
             bot_->message_create(dpp::message(_input->channel_id, e));
-            stop();
+            terminating = true;
             return false;
-        } else if (_tries == _max_tries) {
+        } else if (!_tries) {
             dpp::message m = dpp::message()
                 .set_reference(_input->message_id)
                 .add_embed(dpp::embed().set_title(_(_input->lang_id, COMMAND_BNC_GAME_MAX_TRIES_REACHED)));
             m.channel_id = _input->channel_id;
             bot_->message_create(m);
-            stop();
+            terminating = true;
             return false;
         }
         _input.edit_reply(_e);
@@ -110,9 +111,8 @@ public:
 
 private:
     Input _input;
-    int _tries = 0;
-    const int _length;
-    const int _max_tries;
+    int _tries;
+    int _length;
 
     std::vector<int> _secret;
     std::unordered_map<uint64_t, int> _answers;

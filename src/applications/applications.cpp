@@ -1,21 +1,10 @@
 #include "applications.h"
-#include "../module.h"
 #include <mutex>
 
 Bot* bot = nullptr;
 
-extern "C" void destroy(Bot* bot, void*)
+extern "C" void* init(Bot* bot)
 {
-    std::unique_lock lock(bot->app_mutex);
-    for (auto& app : bot->applications) delete app.second;
-    bot->applications.clear();
-}
-
-extern "C" Module* init(Bot* bot)
-{
-    Module* app_mod = (Module*)malloc(sizeof(Module));
-    *app_mod        = {"applications", NULL, NULL};
-
     ::bot = bot;
 
     {
@@ -25,5 +14,12 @@ extern "C" Module* init(Bot* bot)
         };
     }
 
-    return app_mod;
+    return NULL;
+}
+
+extern "C" void destroy(Bot* bot, void*)
+{
+    std::unique_lock lock(bot->app_mutex);
+    for (auto& app : bot->applications) delete app.second;
+    bot->applications.clear();
 }

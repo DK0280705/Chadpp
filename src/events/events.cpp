@@ -1,6 +1,5 @@
 #include "events.h"
 #include "../bot.h"
-#include "../module.h"
 
 extern "C" typedef struct Handlers
 {
@@ -16,26 +15,8 @@ extern "C" typedef struct Handlers
 
 Bot* bot = nullptr;
 
-extern "C" void destroy(Bot* bot, void* data)
+extern "C" void* init(Bot* bot)
 {
-    Handlers* h = (Handlers*)data;
-    bot->log(dpp::ll_info, "Detaching events");
-    bot->on_button_click.detach(h->btc);
-    bot->on_select_click.detach(h->sec);
-    bot->on_slashcommand.detach(h->slc);
-    bot->on_log.detach(h->log);
-    bot->on_message_create.detach(h->mcr);
-    bot->on_message_create.detach(h->mcl);
-    bot->on_ready.detach(h->rdy);
-    bot->on_voice_receive.detach(h->vor);
-    free(h);
-}
-
-extern "C" Module* init(Bot* bot)
-{
-    Module* ev_mod = (Module*)malloc(sizeof(Module));
-    *ev_mod        = {"events", NULL, NULL};
-
     Handlers* h = (Handlers*)malloc(sizeof(Handlers));
 
     ::bot = bot;
@@ -49,6 +30,19 @@ extern "C" Module* init(Bot* bot)
     h->rdy = bot->on_ready(&event_ready);
     h->vor = bot->on_voice_receive(&event_voice_receive);
 
-    ev_mod->data = h;
-    return ev_mod;
+    return h;
+}
+
+extern "C" void destroy(Bot* bot, void* data)
+{
+    Handlers* h = (Handlers*)data;
+    bot->on_button_click.detach(h->btc);
+    bot->on_select_click.detach(h->sec);
+    bot->on_slashcommand.detach(h->slc);
+    bot->on_log.detach(h->log);
+    bot->on_message_create.detach(h->mcr);
+    bot->on_message_create.detach(h->mcl);
+    bot->on_ready.detach(h->rdy);
+    bot->on_voice_receive.detach(h->vor);
+    free(h);
 }

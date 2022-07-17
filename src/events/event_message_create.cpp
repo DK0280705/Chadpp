@@ -4,7 +4,6 @@
 #include "../variant_cast.h"
 #include "events.h"
 #include <dpp/fmt/format.h>
-#include <sstream>
 
 #define SPAM_LIMIT    1
 #define MAX_PENALTIES 5
@@ -22,7 +21,7 @@ static void check_spam(Bot* bot, const dpp::message& msg)
     std::unique_lock lock(spam_mutex);
     const auto gs_it = bot->guild_spam_list.find(msg.guild_id);
     if (gs_it != bot->guild_spam_list.end()) {
-        const uint64_t now = static_cast<uint64_t>(dpp::utility::time_f());
+        const uint64_t now = dpp::utility::time_f();
         const auto m_it    = member_spam.find(msg.author.id);
         if (m_it != member_spam.end()) {
             if (now - m_it->second <= SPAM_LIMIT) {
@@ -42,57 +41,45 @@ static void check_spam(Bot* bot, const dpp::message& msg)
 static int parse_message(const dpp::message& msg,
                          const std::vector<dpp::command_option>& c_options,
                          Command_options& options,
-                         std::stringstream& ss)
+                         int last_pos)
 {
     for (const auto& co : c_options) {
-        if (ss.eof() || !ss) {
+        const int new_pos = msg.content.find(' ', last_pos);
+        if (last_pos <= 0 && new_pos <= 0) {
             if (co.required) return PARSE_ERR_ARGUMENTS;
             else if (co.type <= 2) return PARSE_ERR_SUBCOMMAND_EMPTY;
             break;
         }
         dpp::command_parameter cp;
-
+ 
         if (co.choices.empty()) {
             switch (co.type) {
             case dpp::co_string:
             {
-                std::string str;
-                std::string temp;
-                ss >> str;
-
-                if (str[0] == '"') {
-                    while (str.back() != '"') {
-                        if (ss.eof() || !ss) return PARSE_ERR_STRING_DOUBLE_QUOTES;
-                        ss >> temp;
-                        str += " " + temp;
-                    }
-                    str = str.substr(1, str.size() - 2);
-                } else if (&co == &c_options.back())
-                    while (ss >> temp) str += " " + temp;
-
-                cp = str;
+                if (msg.content[last_pos] == '"') {
+                    const int dqpos = msg.content.find('"', last_pos+1);
+                    if (dqpos == -1) return PARSE_ERR_STRING_DOUBLE_QUOTES;
+                    cp = msg.content.substr(last_pos + 1, dqpos - last_pos - 1);
+                    break;
+                }
+                cp = msg.content.substr(last_pos, new_pos - last_pos);
                 break;
             }
             case dpp::co_integer:
             {
-                int64_t i = 0;
-                ss >> i;
-                cp = i;
+                cp = std::stoll(msg.content.substr(last_pos, new_pos - last_pos));
                 break;
             }
             case dpp::co_number:
             {
-                double d = 0.0F;
-                ss >> d;
-                cp = d;
+                cp = std::stod(msg.content.substr(last_pos, new_pos - last_pos));
                 break;
             }
             case dpp::co_boolean:
             {
-                std::string str;
-                ss >> str;
+                std::string str = msg.content.substr(last_pos, new_pos - last_pos);
                 std::transform(str.begin(), str.end(), str.begin(),
-                            [](unsigned char c) { return std::tolower(c); });
+                               [](unsigned char c) { return std::tolower(c); });
 
                 if (str == "true" || str == "1") cp = true;
                 else if (str == "false" || str == "0") cp = false;
@@ -101,52 +88,52 @@ static int parse_message(const dpp::message& msg,
             }
             case dpp::co_user:
             {
-                std::string str;
-                ss >> str;
-
+                const std::string str = msg.content.substr(last_pos, new_pos - last_pos);
                 if (str[0] == '<' && str[1] == '@' && str[str.size() - 1] == '>') {
-                    dpp::snowflake uid = std::stoull(str.substr(2, str.size() - 1), 0, 10);
-                    dpp::user* u       = dpp::find_user(uid);
+                    const uint64_t uid = std::stoull(str.substr(2, str.size() - 1), 0, 10);
+                    const dpp::user* u = dpp::find_user(uid);
                     if (u) {
                         dpp::resolved_user m;
-                        m.user        = *u;
-                        dpp::guild* g = dpp::find_guild(msg.guild_id);
-                        if (g->members.find(uid) != g->members.end()) m.member = g->members[uid];
+                        m.user = *u;
+
+                        const dpp::guild* g = dpp::find_guild(msg.guild_id);
+                        if (g->members.find(uid) != g->members.end()) m.member = g->members.at(uid);
+
                         cp = m;
-                    } else return PARSE_ERR_USER;
+                        break;
+                    }
                 }
-                break;
+                return PARSE_ERR_USER;
             }
             case dpp::co_channel:
             {
-                std::string str;
-                ss >> str;
-
+                const std::string str = msg.content.substr(last_pos, new_pos - last_pos);
                 if (str[0] == '<' && str[1] == '#' && str[str.size() - 1] == '>') {
-                    dpp::snowflake cid = std::stoull(str.substr(2, str.size() - 1), 0, 10);
-                    dpp::channel* c    = dpp::find_channel(cid);
-                    if (c) cp = *c;
-                    else return PARSE_ERR_CHANNEL;
+                    const uint64_t cid    = std::stoull(str.substr(2, str.size() - 1), 0, 10);
+                    const dpp::channel* c = dpp::find_channel(cid);
+                    if (c) {
+                        cp = *c;
+                        break;
+                    }
                 }
-                break;
+                return PARSE_ERR_CHANNEL;
             }
             case dpp::co_role:
             {
-                std::string str;
-                ss >> str;
-
+                const std::string str = msg.content.substr(last_pos, new_pos - last_pos);
                 if (str[0] == '<' && str[1] == '&' && str[str.size() - 1] == '>') {
-                    dpp::snowflake rid = std::stoull(str.substr(2, str.size() - 1), 0, 10);
-                    dpp::role* r       = dpp::find_role(rid);
-                    if (r) cp = *r;
-                    else return PARSE_ERR_ROLE;
+                    const uint64_t rid = std::stoull(str.substr(2, str.size() - 1), 0, 10);
+                    const dpp::role* r = dpp::find_role(rid);
+                    if (r) {
+                        cp = *r;
+                        break;
+                    }
                 }
-                break;
+                return PARSE_ERR_ROLE;
             }
             default:
             {
-                std::string name;
-                ss >> name;
+                const std::string name = msg.content.substr(last_pos, new_pos - last_pos);
 
                 const auto co_it = std::find_if(c_options.begin(), c_options.end(),
                                                 [&](const dpp::command_option& opt) {
@@ -155,24 +142,23 @@ static int parse_message(const dpp::message& msg,
 
                 if (co_it != c_options.end()) {
                     options.emplace(options.size(), co_it - c_options.begin());
-                    parse_message(msg, co_it->options, options, ss);
+                    parse_message(msg, co_it->options, options, new_pos + 1);
                     return NOTHING;
                 } else return PARSE_ERR_SUBCOMMAND;
             }
             }
         } else {
-            std::string str;
-            ss >> str;
-            
+            const std::string name = msg.content.substr(last_pos, new_pos - last_pos);
             auto it = std::find_if(co.choices.begin(), co.choices.end(),
                                    [&](const dpp::command_option_choice& c) {
-                return c.name == str;
+                return c.name == name;
             });
             
             if (it != co.choices.end()) cp = variant_cast(it->value);
             else return PARSE_ERR_CHOICES;
         }
         options.emplace(options.size(), cp);
+        last_pos = new_pos + 1;
     }
     return NOTHING;
 }
@@ -191,7 +177,8 @@ void event_message_create(const dpp::message_create_t& event)
 
     // Controls whether the user is afk or not.
     bot->database.execute("EXECUTE find_afk_user(" + std::to_string(event.msg.author.id) + ")",
-                          [ch_id = event.msg.channel_id, a_id = event.msg.author.id,
+                          [ch_id    = event.msg.channel_id,
+                           a_id     = event.msg.author.id, 
                            g_id     = event.msg.guild_id,
                            mentions = event.msg.mentions](const pqxx::result& res) {
         if (!res.empty()) {
@@ -205,23 +192,21 @@ void event_message_create(const dpp::message_create_t& event)
             if (!res.empty()) {
                 const dpp::embed e = dpp::embed()
                     .set_color(c_gray)
-                    .set_description(fmt::vformat(_(bot->guild_lang(g_id), COMMAND_AFK_PINGED),
-                                                  fmt::make_format_args(m.first.id, res[2][0].c_str(),
-                                                                        res[1][0].c_str())));
+                    .set_description(
+                        fmt::vformat(_(bot->guild_lang(g_id), COMMAND_AFK_PINGED),
+                                     fmt::make_format_args(m.first.id, res[2][0].c_str(),
+                                                           res[1][0].c_str())));
                 bot->message_create(dpp::message(ch_id, e));
             }
         }
     });
 
-    // Copy the content string
-    std::string content = event.msg.content;
+    if (event.msg.content.rfind(bot->default_prefix, 0) != 0) return;
 
-    if (content.rfind(bot->default_prefix, 0) != 0) return;
-    content = content.substr(bot->default_prefix.size());
-
-    std::stringstream ss(content);
-    std::string cmd_name;
-    ss >> cmd_name;
+    int new_pos = event.msg.content.find(' ', 0);
+    if (new_pos == bot->default_prefix.size()) return;
+    std::string cmd_name = event.msg.content.substr(bot->default_prefix.size(),
+                                                    new_pos - bot->default_prefix.size());
     std::transform(cmd_name.begin(), cmd_name.end(), cmd_name.begin(),
                    [](unsigned char c) { return std::tolower(c); });
 
@@ -229,12 +214,12 @@ void event_message_create(const dpp::message_create_t& event)
     if (Command* c = bot->find_command(cmd_name)) {
         Command_options options;
 
-        if (int err = parse_message(event.msg, c->options, options, ss))
+        if (const int err = parse_message(event.msg, c->options, options, new_pos + 1))
             return event.reply(_(bot->guild_lang(event.msg.guild_id), err));
         
         Input input(bot, event.from, options, event.msg);
 
-        if (int err = bot->handle_command(c, input))
+        if (const int err = bot->handle_command(c, input))
             return input.reply(_(input->lang_id, err));
 
         bot->execute_cmd(c, input);

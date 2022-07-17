@@ -1,20 +1,9 @@
 #include "commands.h"
-#include "../module.h"
 
 Bot* bot = nullptr;
 
-extern "C" void destroy(Bot* bot, void*)
+extern "C" void* init(Bot* bot)
 {
-    std::unique_lock lock(bot->cmd_mutex); 
-    for (auto& cmd : bot->commands) delete cmd.second;
-    bot->commands.clear();
-}
-
-extern "C" Module* init(Bot* bot)
-{
-    Module* cmd_mod = (Module*)malloc(sizeof(Module));
-    *cmd_mod        = {"commands", NULL, NULL};
-    
     ::bot = bot;
     
     {
@@ -38,5 +27,12 @@ extern "C" Module* init(Bot* bot)
         };
     }
 
-    return cmd_mod;
+    return NULL;
+}
+
+extern "C" void destroy(Bot* bot, void*)
+{
+    std::unique_lock lock(bot->cmd_mutex); 
+    for (auto& cmd : bot->commands) delete cmd.second;
+    bot->commands.clear();
 }

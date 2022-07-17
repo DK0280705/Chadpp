@@ -1,4 +1,5 @@
 #pragma once
+#include "module.h"
 #include <dpp/cluster.h>
 #include <fstream>
 
@@ -82,7 +83,7 @@ public:
     std::unordered_map<dpp::snowflake, Message_collector*> message_collectors;
 
     // Dynamic library handlers
-    std::unordered_map<std::string, struct Module*> modules;
+    std::unordered_map<std::string, Module> modules;
 
     // Why there's so many mutex here?
     // Multithreading kinda pain

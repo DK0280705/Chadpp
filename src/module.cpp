@@ -2,18 +2,17 @@
 #include "module.h"
 #include <dlfcn.h>
 
-bool load_module(Bot* bot, const std::string& name) noexcept
+bool load_module(Bot* bot, const char* name) noexcept
 {
-    const std::string filename = "./" + name + ".so"; 
+    const std::string filename = "./" + std::string(name) + ".so"; 
 
     void* handle = dlopen(filename.c_str(), RTLD_NOW | RTLD_LOCAL);
     if (!handle) return false;
 
-    typedef Module* (*init_t)(Bot*);
+    typedef void* (*init_t)(Bot*);
     init_t init = (init_t)dlsym(handle, "init");
-    Module* mod = init(bot);
-    mod->handle = handle;
-    bot->modules[mod->name] = mod;
+
+    bot->modules.emplace(name, Module{name, init(bot), handle});
 
     return true;
 }
@@ -28,13 +27,12 @@ bool reload_module(Bot* bot, const char* name) noexcept
     return load_module(bot, name);
 }
 
-bool unload_module(Bot* bot, Module* mod) noexcept
+bool unload_module(Bot* bot, Module& mod) noexcept
 {
     typedef void (*destroy_t)(Bot*, void*);
-    destroy_t destroy = (destroy_t)dlsym(mod->handle, "destroy");
-    destroy(bot, mod->data);
-    dlclose(mod->handle);
-    free(mod);
+    destroy_t destroy = (destroy_t)dlsym(mod.handle, "destroy");
+    destroy(bot, mod.data);
+    dlclose(mod.handle);
 
     return true;
 }

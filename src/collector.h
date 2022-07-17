@@ -22,22 +22,33 @@ public:
               uint64_t duration = DEFAULT_COLLECTOR_TIMEOUT,
               bool store_item   = true,
               bool auto_reset   = true)
-        : bot_(bot), duration_(duration), auto_reset_(auto_reset), store_item_(store_item)
+        : mutex(new std::mutex), bot_(bot), duration_(duration), auto_reset_(auto_reset), store_item_(store_item)
     {
         _timer = bot_->start_timer(_Delete {this}, duration_);
     }
 
-    mutable std::mutex mutex;
+    bool terminating = false;
+    mutable std::mutex* mutex;
+
+    void destroy()
+    {
+        {
+            std::lock_guard lock(*mutex);
+            on_end(_stored);
+        }
+        delete mutex;
+    };
 
     void execute(const T& item)
     {
-        if (mutex.try_lock()) {
+        if (mutex->try_lock()) {
             if (on_collect(item)) {
                 if (store_item_) _stored.emplace_back(item);
                 if (auto_reset_) time_reset();
             }
-            mutex.unlock();
+            mutex->unlock();
         }
+        if (terminating) destroy();
     }
 
     void time_reset(uint64_t duration = 0)
@@ -50,9 +61,10 @@ public:
 
     virtual void on_end(const std::vector<T>& list) {}
 
-    void stop() { on_end(_stored); }
-
-    virtual ~Collector() { bot_->stop_timer(_timer); }
+    virtual ~Collector() { 
+        bot_->stop_timer(_timer);
+        if (!terminating) destroy();
+    }
 
 protected:
     bool auto_reset_;
@@ -64,11 +76,9 @@ private:
     struct _Delete
     {
         Collector<T>* c;
-
         void operator()(dpp::timer)
         {
-            std::lock_guard lock(c->mutex);
-            c->stop();
+            c->destroy();
         }
     };
 
