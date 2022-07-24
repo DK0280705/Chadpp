@@ -3,8 +3,17 @@
 #include "logger.h"
 #include "module.h"
 #include <dpp/nlohmann/json.hpp>
+#include <stdexcept>
 
 constexpr const char* EXIT_MESSAGE = "Terminating...";
+
+char* DISCORD_TOKEN;
+
+enum env_types
+{
+    string,
+    integer
+};
 
 static inline void ltrim(std::string &s) {
     s.erase(s.begin(), std::find_if(s.begin(), s.end(), [](unsigned char ch) {
@@ -23,53 +32,36 @@ static inline void trim(std::string &s) {
     rtrim(s);
 }
 
-static inline std::string jtypetostr(nlohmann::json::value_t t)
-{
-    static constexpr const char* jtypestr[] = {
-        "null",    "object",           "array", "string", "boolean",
-        "integer", "unsigned integer", "float", "binary", "discarded"};
-    return jtypestr[static_cast<int>(t)];
-}
-
 int main()
 {
-    std::ifstream conf_file("config.json");
-    if (!conf_file) {
-        log_err("CONFIG", "Could NOT find file named 'config.json'");
-        return 1;
-    }
-
-    nlohmann::json config;
-    conf_file >> config;
-    conf_file.close();
+    std::unordered_map<const char*, std::variant<uint64_t, char*>> config(5);
 
     constexpr const std::array<const char*, 5> keys = {
-        "token", "botlog_id", "owner_id", "guild_id", "conn_string"
+        "DISCORD_TOKEN", "BOTLOG_ID", "OWNER_ID", "GUILD_ID", "CONN_STRING"
     };
-    typedef nlohmann::json::value_t value_t;
-    constexpr const std::array<value_t, 5> types = {
-        value_t::string,
-        value_t::number_unsigned,
-        value_t::number_unsigned,
-        value_t::number_unsigned,
-        value_t::string
+
+    constexpr const env_types types[] = {
+        string, integer, integer, integer, string
     };
 
     for (auto it = keys.begin(); it != keys.end(); it++) {
-        auto c_it = std::find_if(config.items().begin(), config.items().end(),
-                                 [&](const auto& i) { return i.key() == *it; });
-        if(c_it == config.items().end()) {
+        char* env = std::getenv(*it);
+        if (!env) {
             log_err("CONFIG", "Undefined config detected: " + std::string(*it));
             return 1;
         }
-        if (config.at(*it).type() != types[it - keys.begin()]) {
-            log_err("CONFIG", "Expected " + std::string(*it) + " to be a " +
-                                  jtypetostr(types[it - keys.begin()]) +
-                                  " instead got a value of " + jtypetostr(config.at(*it).type()) +
-                                  " type");
-            return 1;
-        }
+        if (types[it - keys.begin()]) {
+            try {
+                uint64_t e = std::stoull(env);
+                config[*it] = e;
+            } catch (const std::invalid_argument&) {
+                log_err("CONFIG", "Expected integer value at key: " + std::string(*it));
+                return 1;
+            }
+        } else config[*it] = env;
     }
+
+    DISCORD_TOKEN = std::get<char*>(config.at("DISCORD_TOKEN"));
 
     std::ifstream sql_file("chadpp.sql");
     if (!sql_file) {
@@ -78,7 +70,7 @@ int main()
     }
 
     try {
-        pqxx::connection conn(config["conn_string"].get<std::string>());
+        pqxx::connection conn(std::get<char*>(config.at("CONN_STRING")));
 
         if (conn.is_open()) {
             log_info("DATABASE", "Database started!\n  DBName\t: " + std::string(conn.dbname()) +
@@ -99,15 +91,16 @@ int main()
             return 1;
         }
 
-        Database database(&conn);
+        Database db(&conn);
 
-        Bot& bot = Bot::init(config.at("token").get<std::string>(), database);
+        Bot& bot = Bot::instance();
 
-        bot.botlog_id      = config.at("botlog_id").get<uint64_t>();
-        bot.owner_id       = config.at("owner_id").get<uint64_t>();
-        bot.test_guild_id  = config.at("guild_id").get<uint64_t>();
-        if (config.contains("prefix"))
-            bot.default_prefix = config.at("prefix").get<std::string>();
+        bot.database      = &db;
+        bot.botlog_id     = std::get<uint64_t>(config.at("BOTLOG_ID"));
+        bot.owner_id      = std::get<uint64_t>(config.at("OWNER_ID"));
+        bot.test_guild_id = std::get<uint64_t>(config.at("GUILD_ID"));
+        if (config.contains("PREFIX"))
+            bot.default_prefix = std::get<uint64_t>(config.at("PREFIX"));
 
         bot.set_websocket_protocol(dpp::ws_etf);
 
@@ -138,13 +131,14 @@ int main()
             }
         }
 
-        log_info("CACHE", "Total: " +
-                              std::to_string(dpp::get_user_cache()->bytes() +
-                                             dpp::get_role_cache()->bytes() +
-                                             dpp::get_guild_cache()->bytes() +
-                                             dpp::get_emoji_cache()->bytes() +
-                                             dpp::get_channel_cache()->bytes()) +
-                              "B");
+        log_info("CACHE", "Total: "
+            + std::to_string(
+                dpp::get_user_cache()->bytes()
+                    + dpp::get_role_cache()->bytes()
+                    + dpp::get_guild_cache()->bytes()
+                    + dpp::get_emoji_cache()->bytes()
+                    + dpp::get_channel_cache()->bytes())
+            + "B");
 
     } catch (const std::exception& e) {
         log_err("BOT", e.what());

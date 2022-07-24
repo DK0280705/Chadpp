@@ -45,15 +45,8 @@ public:
      */
     static Bot& instance();
 
-    /**
-     * @brief To create instance of Bot singleton.
-     * @param token Discord Bot API Token
-     * @param conn PostgreSQL libpqxx connection
-     */
-    static Bot& init(const std::string& token, Database& db) noexcept;
-
     bool loaded;
-    Database& database;
+    Database* database;
 
     dpp::snowflake botlog_id     = 0;
     dpp::snowflake owner_id      = 0;
@@ -136,10 +129,8 @@ public:
     friend void event_ready(const dpp::ready_t& event);
 
 private:
-    Bot(const std::string& token, Database& db) noexcept;
+    Bot() noexcept;
     
-    static Bot* _p_instance;
-
     double _start_time;
 
     void _setup();

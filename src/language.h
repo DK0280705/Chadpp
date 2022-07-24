@@ -15,6 +15,7 @@ enum Text_table : int
     PARSE_ERR_ARGUMENTS,
     PARSE_ERR_CHOICES,
     PARSE_ERR_STRING_DOUBLE_QUOTES,
+    PARSE_ERR_NUMBER,
     PARSE_ERR_BOOLEAN,
     PARSE_ERR_USER,
     PARSE_ERR_CHANNEL,
@@ -97,4 +98,4 @@ enum Text_table : int
     COMMAND_URBAN_DESC_PARAM1
 };
 
-const char* _(int l_id, int text_id);
+extern const char* _(int l_id, int text_id);

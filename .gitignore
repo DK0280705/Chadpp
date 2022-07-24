@@ -6,3 +6,4 @@ config.json
 compile_commands.json
 *.pcm
 .cache
+*.env

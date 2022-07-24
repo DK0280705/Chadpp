@@ -12,8 +12,8 @@ Command_guildstats::Command_guildstats()
 
 void Command_guildstats::call(const Input& input) const
 {
-    const pqxx::result res = bot->database.execute_sync("EXECUTE get_guild_active_users(" +
-                                                    pqxx::to_string(input->guild_id) + ")");
+    const pqxx::result res = bot->database->execute_sync("EXECUTE get_guild_active_users(" +
+                                                          pqxx::to_string(input->guild_id) + ")");
 
     std::string active_members;
     for (const auto& row : res) {

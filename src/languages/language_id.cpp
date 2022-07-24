@@ -14,6 +14,7 @@ std::vector<const char*> langv_id = {
     "Masih terdapat argumen yang dibutuhkan",
     "Terdapat pilihan untuk perintah ini, gunakan help untuk informasi lebih lanjut",
     "Jika anda mengawali dengan titik dua, maka akhiri pula dengan titik dua",
+    "Itu bukan angka",
     "Gunakan `true` atau `false` untuk tipe boolean, bisa juga dengan `1` atau `0`",
     "Siapa itu? Antara id tersebut tidak valid atau memang tidak ada",
     "Dimana? Apakah channel tersebut ada? Atau aku yang tidak memiliki akses",

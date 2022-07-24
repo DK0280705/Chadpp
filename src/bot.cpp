@@ -29,13 +29,14 @@ constexpr const uint32_t INTENTS = dpp::i_guilds
     | dpp::i_guild_messages
     | dpp::i_guild_voice_states;
 
+extern char* DISCORD_TOKEN;
+
 struct Input_request
 {
     Command* cmd;
     Input input;
 };
 
-Bot* Bot::_p_instance = nullptr;
 bool Bot::terminating = false;
 std::unordered_map<int, std::vector<const char*>> lang;
 
@@ -63,9 +64,8 @@ static void fill_cmd_options(std::vector<dpp::command_option>& options, int id)
     }
 }
 
-Bot::Bot(const std::string& token, Database& db) noexcept
-    : dpp::cluster(token, INTENTS)
-    , database(db)
+Bot::Bot() noexcept
+    : dpp::cluster(DISCORD_TOKEN, INTENTS)
     , loaded(false)
     , _start_time(dpp::utility::time_f())
 {
@@ -77,14 +77,8 @@ Bot::Bot(const std::string& token, Database& db) noexcept
 
 Bot& Bot::instance()
 {
-    return _p_instance ? *_p_instance : throw std::runtime_error("Bot instance is null pointer");
-}
-
-Bot& Bot::init(const std::string& token, Database& conn) noexcept
-{
-    static Bot bot(token, conn);
-    _p_instance = &bot;
-    return *_p_instance;
+    static Bot bot;
+    return bot;
 }
 
 std::vector<dpp::slashcommand> Bot::build_slashcommands() const
@@ -169,10 +163,10 @@ void Bot::_setup()
     if (loaded) return;
     log_info("BOT", "Setting up"); 
 
-    const pqxx::result gs = database.execute_sync("SELECT * FROM chadpp.guild_spam");
+    const pqxx::result gs = database->execute_sync("SELECT * FROM chadpp.guild_spam");
     for (const auto& row : gs) guild_spam_list.emplace(row[0].as<uint64_t>(), true);
 
-    const pqxx::result gl = database.execute_sync("SELECT * FROM chadpp.guild_lang");
+    const pqxx::result gl = database->execute_sync("SELECT * FROM chadpp.guild_lang");
     for (const auto& row : gl) guild_lang_list.emplace(row[0].as<uint64_t>(), row[1].as<int>()); 
 
     this->guild_bulk_command_create(build_slashcommands(), test_guild_id);

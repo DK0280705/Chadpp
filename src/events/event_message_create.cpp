@@ -4,6 +4,7 @@
 #include "../variant_cast.h"
 #include "events.h"
 #include <dpp/fmt/format.h>
+#include <exception>
 
 #define SPAM_LIMIT    1
 #define MAX_PENALTIES 5
@@ -67,12 +68,20 @@ static int parse_message(const dpp::message& msg,
             }
             case dpp::co_integer:
             {
-                cp = std::stoll(msg.content.substr(last_pos, new_pos - last_pos));
+                try {
+                    cp = std::stoll(msg.content.substr(last_pos, new_pos - last_pos));
+                } catch (const std::exception&) {
+                    return PARSE_ERR_NUMBER;
+                }
                 break;
             }
             case dpp::co_number:
             {
-                cp = std::stod(msg.content.substr(last_pos, new_pos - last_pos));
+                try {
+                    cp = std::stod(msg.content.substr(last_pos, new_pos - last_pos));
+                } catch (const std::exception&) {
+                    return PARSE_ERR_NUMBER;
+                }
                 break;
             }
             case dpp::co_boolean:
@@ -90,18 +99,20 @@ static int parse_message(const dpp::message& msg,
             {
                 const std::string str = msg.content.substr(last_pos, new_pos - last_pos);
                 if (str[0] == '<' && str[1] == '@' && str[str.size() - 1] == '>') {
-                    const uint64_t uid = std::stoull(str.substr(2, str.size() - 1), 0, 10);
-                    const dpp::user* u = dpp::find_user(uid);
-                    if (u) {
-                        dpp::resolved_user m;
-                        m.user = *u;
+                    try {
+                        const uint64_t uid = std::stoull(str.substr(2, str.size() - 1), 0, 10);
+                        const dpp::user* u = dpp::find_user(uid);
+                        if (u) {
+                            dpp::resolved_user m;
+                            m.user = *u;
 
-                        const dpp::guild* g = dpp::find_guild(msg.guild_id);
-                        if (g->members.find(uid) != g->members.end()) m.member = g->members.at(uid);
+                            const dpp::guild* g = dpp::find_guild(msg.guild_id);
+                            if (g->members.find(uid) != g->members.end()) m.member = g->members.at(uid);
 
-                        cp = m;
-                        break;
-                    }
+                           cp = m;
+                            break;
+                        }
+                    } catch (const std::exception&) {}
                 }
                 return PARSE_ERR_USER;
             }
@@ -109,12 +120,14 @@ static int parse_message(const dpp::message& msg,
             {
                 const std::string str = msg.content.substr(last_pos, new_pos - last_pos);
                 if (str[0] == '<' && str[1] == '#' && str[str.size() - 1] == '>') {
-                    const uint64_t cid    = std::stoull(str.substr(2, str.size() - 1), 0, 10);
-                    const dpp::channel* c = dpp::find_channel(cid);
-                    if (c) {
-                        cp = *c;
-                        break;
-                    }
+                    try {
+                        const uint64_t cid    = std::stoull(str.substr(2, str.size() - 1), 0, 10);
+                        const dpp::channel* c = dpp::find_channel(cid);
+                        if (c) {
+                            cp = *c;
+                            break;
+                        }
+                    } catch (const std::exception&) {}
                 }
                 return PARSE_ERR_CHANNEL;
             }
@@ -122,12 +135,14 @@ static int parse_message(const dpp::message& msg,
             {
                 const std::string str = msg.content.substr(last_pos, new_pos - last_pos);
                 if (str[0] == '<' && str[1] == '&' && str[str.size() - 1] == '>') {
-                    const uint64_t rid = std::stoull(str.substr(2, str.size() - 1), 0, 10);
-                    const dpp::role* r = dpp::find_role(rid);
-                    if (r) {
-                        cp = *r;
-                        break;
-                    }
+                    try {
+                        const uint64_t rid = std::stoull(str.substr(2, str.size() - 1), 0, 10);
+                        const dpp::role* r = dpp::find_role(rid);
+                        if (r) {
+                            cp = *r;
+                            break;
+                        }
+                    } catch (const std::exception&) {}
                 }
                 return PARSE_ERR_ROLE;
             }
@@ -171,24 +186,24 @@ void event_message_create(const dpp::message_create_t& event)
 
     // Update or insert active users table.
     // It consumes message content length. Sounds like levelling system but more statistically.
-    bot->database.execute(fmt::format("EXECUTE upsert_active_user({}, {}, {})",
-                                      event.msg.author.id, event.msg.guild_id,
-                                      event.msg.content.length()));
+    bot->database->execute(fmt::format("EXECUTE upsert_active_user({}, {}, {})",
+                                        event.msg.author.id, event.msg.guild_id,
+                                        event.msg.content.length()));
 
     // Controls whether the user is afk or not.
-    bot->database.execute("EXECUTE find_afk_user(" + std::to_string(event.msg.author.id) + ")",
-                          [ch_id    = event.msg.channel_id,
-                           a_id     = event.msg.author.id, 
-                           g_id     = event.msg.guild_id,
-                           mentions = event.msg.mentions](const pqxx::result& res) {
+    bot->database->execute("EXECUTE find_afk_user(" + std::to_string(event.msg.author.id) + ")",
+                           [ch_id    = event.msg.channel_id,
+                            a_id     = event.msg.author.id, 
+                            g_id     = event.msg.guild_id,
+                            mentions = event.msg.mentions](const pqxx::result& res) {
         if (!res.empty()) {
-            bot->database.execute_sync("DELETE FROM chadpp.afk_users WHERE id = " +
-                                       pqxx::to_string(a_id));
+            bot->database->execute_sync("DELETE FROM chadpp.afk_users WHERE id = " +
+                                        pqxx::to_string(a_id));
             bot->message_create(dpp::message(ch_id, _(bot->guild_lang(g_id), COMMAND_AFK_REMOVED)));
         }
         for (const auto& m : mentions) {
-            const pqxx::result res = bot->database.execute_sync("EXECUTE find_afk_user(" +
-                                                                std::to_string(m.first.id) + ")");
+            const pqxx::result res = bot->database->execute_sync("EXECUTE find_afk_user(" +
+                                                                 std::to_string(m.first.id) + ")");
             if (!res.empty()) {
                 const dpp::embed e = dpp::embed()
                     .set_color(c_gray)

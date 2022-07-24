@@ -19,6 +19,6 @@ void Command_lang::call(const Input &input) const
         std::unique_lock lock(bot->lang_mutex);
         bot->guild_lang_list.emplace(input->guild_id, lang);
     }
-    bot->database.execute(fmt::format("EXECUTE upsert_guild_lang({}, {})", input->guild_id, lang));
+    bot->database->execute(fmt::format("EXECUTE upsert_guild_lang({}, {})", input->guild_id, lang));
     input.reply(_(lang, COMMAND_LANG_UPDATED));
 }

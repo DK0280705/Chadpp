@@ -14,6 +14,7 @@ std::vector<const char*> langv_en = {
     "There're still required arguments",
     "There're choices for this command, goto help for more information",
     "If you start with double quotes, then end it with double quotes too",
+    "That's not a number",
     "Use `true` or `false` for boolean type, you can also use `1` or `0`",
     "Who's that? either the id is invalid or never existed",
     "Where? Does that channel exist? Or it's me who don't have a permission",

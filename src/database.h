@@ -12,7 +12,6 @@ public:
     Database(pqxx::connection* c);
     Database() = delete;
     Database(const Database&) = delete;
-    Database(Database&&) = delete;
     ~Database();
 
     pqxx::connection* conn;

@@ -74,11 +74,11 @@ static int parse_interaction(const dpp::interaction& itr,
 
 void event_slashcommand(const dpp::slashcommand_t& event)
 {
-    bot->database.execute("EXECUTE find_afk_user(" + std::to_string(event.command.usr.id) + ")",
-                            [usr_id = event.command.usr.id, ch_id = event.command.channel_id,
-                             g_id = event.command.guild_id](const pqxx::result& res) {
+    bot->database->execute("EXECUTE find_afk_user(" + std::to_string(event.command.usr.id) + ")",
+                           [usr_id = event.command.usr.id, ch_id = event.command.channel_id,
+                            g_id = event.command.guild_id](const pqxx::result& res) {
         if (!res.empty()) {
-            bot->database.execute_sync("DELETE FROM chadpp.afk_users WHERE id = " + std::to_string(usr_id));
+            bot->database->execute_sync("DELETE FROM chadpp.afk_users WHERE id = " + std::to_string(usr_id));
 
             bot->message_create(dpp::message(ch_id, _(bot->guild_lang(g_id), COMMAND_AFK_REMOVED)));
         }

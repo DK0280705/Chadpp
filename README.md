@@ -21,15 +21,13 @@ Then clone this repo.
     git submodule update --init --recursive
 ```
 
-Create `config.json` file with your favorite editor.
-```json
-{
-    "token": "Your token",
-    "botlog_id": 123456789098765432,
-    "guild_id": 123456789098765432,
-    "owner_id": 123456789098765432,
-    "conn_string": "Your PostgreSQL connection string"
-}
+Create `.env` file with your favorite editor.
+```env
+DISCORD_TOKEN="Your Token"    
+BOTLOG_ID=123456789098765432
+GUILD_ID=123456789098765432
+OWNER_ID=123456789098765432
+CONN_STRING="Your PostgreSQL connection string"
 ```
 
 Then configure cmake. You can replace Ninja with GNU make.
@@ -43,8 +41,7 @@ Compile with:
 
 Then run your bot:
 ```
-    cd build
-    ./chadpp
+    ./launch.sh
 ```
 
 ## External Dependencies
