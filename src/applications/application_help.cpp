@@ -50,7 +50,9 @@ void Application_help::call(const Input& input) const
         .add_select_option(dpp::select_option("Utility", "2", _(input->lang_id, COMMAND_HELP_COMP_CAT_UTILITY)))
         .add_select_option(dpp::select_option("Owner", "3", _(input->lang_id, COMMAND_HELP_COMP_CAT_OWNER)));
 
+    const dpp::message m = dpp::message(0, e)
+        .add_component(dpp::component()
+            .add_component(c));
 
-    input.reply(dpp::message(0, e).add_component(dpp::component().add_component(c)),
-                dpp::ir_update_message);
+    input.reply(m, dpp::ir_update_message);
 }

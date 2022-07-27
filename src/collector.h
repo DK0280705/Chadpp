@@ -36,7 +36,6 @@ public:
             std::lock_guard lock(*mutex);
             on_end(_stored);
         }
-        delete mutex;
     };
 
     void execute(const T& item)
@@ -64,6 +63,7 @@ public:
     virtual ~Collector() { 
         bot_->stop_timer(_timer);
         if (!terminating) destroy();
+        delete mutex;
     }
 
 protected:

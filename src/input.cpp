@@ -19,7 +19,7 @@ Input::Input(Bot* bot,
     : _bot(bot)
     , _data(new Input_data {std::move(args), itr.channel_id,                itr.guild_id,
                             itr.message_id,  itr.usr,                       itr.member,
-                            client,          bot->guild_lang(itr.guild_id), false,
+                            client,          bot->guild_lang(itr.guild_id), true,
                             itr.id,          std::move(itr.token)})
 {
 }
