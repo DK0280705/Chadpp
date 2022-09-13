@@ -2,17 +2,21 @@
 #include "database.h"
 #include "logger.h"
 #include "module.h"
+#include <exception>
+#include <future>
 #include <stdexcept>
 
 constexpr const char* EXIT_MESSAGE = "Terminating...";
 
-char* DISCORD_TOKEN;
+char* discord_token;
+char* conn_string;
 
-enum env_types
+static char* env(const char* key)
 {
-    string,
-    integer
-};
+    char* e = std::getenv(key);
+    if (!e) throw std::range_error(key);
+    return e;
+}
 
 static inline void ltrim(std::string &s) {
     s.erase(s.begin(), std::find_if(s.begin(), s.end(), [](unsigned char ch) {
@@ -33,34 +37,26 @@ static inline void trim(std::string &s) {
 
 int main()
 {
-    std::unordered_map<const char*, std::variant<uint64_t, char*>> config(5);
+    // Integer keys
+    static const char* keys[] = { "BOTLOG_ID", "OWNER_ID", "GUILD_ID" };
+    static uint64_t values[] = { 0, 0, 0 };
 
-    constexpr const std::array<const char*, 5> keys = {
-        "DISCORD_TOKEN", "BOTLOG_ID", "OWNER_ID", "GUILD_ID", "CONN_STRING"
-    };
-
-    constexpr const env_types types[] = {
-        string, integer, integer, integer, string
-    };
-
-    for (auto it = keys.begin(); it != keys.end(); it++) {
-        char* env = std::getenv(*it);
-        if (!env) {
-            log_err("CONFIG", "Undefined config detected: " + std::string(*it));
-            return 1;
-        }
-        if (types[it - keys.begin()]) {
+    try {
+        discord_token = env("DISCORD_TOKEN");
+        conn_string   = env("CONN_STRING");
+        for (int i = 0; i < 3; i++) {
+            const char* e = env(keys[i]);
             try {
-                uint64_t e = std::stoull(env);
-                config[*it] = e;
-            } catch (const std::invalid_argument&) {
-                log_err("CONFIG", "Expected integer value at key: " + std::string(*it));
+                values[i] = std::stoull(e);
+            } catch (const std::invalid_argument& e) {
+                log_err("CONFIG", std::string("Expected integer value at key: ") + e.what()); 
                 return 1;
             }
-        } else config[*it] = env;
+        }
+    } catch (const std::range_error& e) {
+        log_err("CONFIG", std::string("Missing config: ") + e.what());
+        return 1;
     }
-
-    DISCORD_TOKEN = std::get<char*>(config.at("DISCORD_TOKEN"));
 
     std::ifstream sql_file("chadpp.sql");
     if (!sql_file) {
@@ -69,7 +65,7 @@ int main()
     }
 
     try {
-        pqxx::connection conn(std::get<char*>(config.at("CONN_STRING")));
+        pqxx::connection conn(conn_string);
 
         if (conn.is_open()) {
             log_info("DATABASE", "Database started!\n  DBName\t: " + std::string(conn.dbname()) +
@@ -95,11 +91,9 @@ int main()
         Bot& bot = Bot::instance();
 
         bot.database      = &db;
-        bot.botlog_id     = std::get<uint64_t>(config.at("BOTLOG_ID"));
-        bot.owner_id      = std::get<uint64_t>(config.at("OWNER_ID"));
-        bot.test_guild_id = std::get<uint64_t>(config.at("GUILD_ID"));
-        if (config.contains("PREFIX"))
-            bot.default_prefix = std::get<uint64_t>(config.at("PREFIX"));
+        bot.botlog_id     = values[0];
+        bot.owner_id      = values[1];
+        bot.test_guild_id = values[2];
 
         bot.set_websocket_protocol(dpp::ws_etf);
 

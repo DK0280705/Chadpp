@@ -29,7 +29,7 @@ constexpr const uint32_t INTENTS = dpp::i_guilds
     | dpp::i_guild_messages
     | dpp::i_guild_voice_states;
 
-extern char* DISCORD_TOKEN;
+extern char* discord_token;
 
 struct Input_request
 {
@@ -65,7 +65,7 @@ static void fill_cmd_options(std::vector<dpp::command_option>& options, int id)
 }
 
 Bot::Bot() noexcept
-    : dpp::cluster(DISCORD_TOKEN, INTENTS)
+    : dpp::cluster(discord_token, INTENTS)
     , loaded(false)
     , _start_time(dpp::utility::time_f())
 {
