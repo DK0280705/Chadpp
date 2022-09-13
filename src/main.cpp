@@ -2,7 +2,6 @@
 #include "database.h"
 #include "logger.h"
 #include "module.h"
-#include <dpp/nlohmann/json.hpp>
 #include <stdexcept>
 
 constexpr const char* EXIT_MESSAGE = "Terminating...";
