@@ -1,4 +1,4 @@
-#include "../utility.h"
+#include "../request_proxy.h"
 #include "commands.h"
 #include <dpp/fmt/format.h>
 #include <dpp/nlohmann/json.hpp>

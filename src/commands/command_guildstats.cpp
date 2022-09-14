@@ -29,13 +29,14 @@ void Command_guildstats::call(const Input& input) const
         .set_color(c_gray)
         .set_thumbnail(g->get_icon_url())
         .add_field(_(input->lang_id, INFORMATION),
-                   fmt::vformat(_(input->lang_id, COMMAND_GUILDSTATS_INFO_FORMAT),
-                               fmt::make_format_args(
-                                    g->owner_id, g->members.size(),
-                                    g->channels.size(),
-                                    bool_string(g->is_verified()),
-                                    bool_string(g->is_discoverable()),
-                                    _(input->lang_id, g->nsfw_level + (int)NSFW_LEVEL_DEFAULT))))
+            fmt::vformat(_(input->lang_id, COMMAND_GUILDSTATS_INFO_FORMAT),
+                fmt::make_format_args(
+                    g->owner_id,
+                    g->members.size(),
+                    g->channels.size(),
+                    btostr(g->is_verified()),
+                    btostr(g->is_discoverable()),
+                    _(input->lang_id, g->nsfw_level + (int)NSFW_LEVEL_DEFAULT))))
         .add_field(_(input->lang_id, COMMAND_GUILDSTATS_INFO_TOP10), active_members);
     input.reply(e);
 }

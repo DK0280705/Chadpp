@@ -12,12 +12,12 @@ void Command_avatar::call(const Input& input) const
 {
     const std::string avatar_url = [&]() {
         if (input->args.empty())
-            return icon_empty(input->member.avatar) ? input->author.get_avatar_url(1024)
-                                                    : input->member.get_avatar_url(1024);
+            return isempty(input->member.avatar) ? input->author.get_avatar_url(1024)
+                                                 : input->member.get_avatar_url(1024);
         else {
             const dpp::resolved_user& ru = std::get<dpp::resolved_user>(input[0]);
-            return icon_empty(ru.member.avatar) ? ru.user.get_avatar_url(1024)
-                                                : ru.member.get_avatar_url(1024);
+            return isempty(ru.member.avatar) ? ru.user.get_avatar_url(1024)
+                                             : ru.member.get_avatar_url(1024);
         }
     }();
 

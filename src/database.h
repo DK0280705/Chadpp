@@ -9,9 +9,9 @@ typedef std::function<void(const pqxx::result&)> Query_completion_callback;
 class Database
 {
 public:
-    Database(pqxx::connection* c);
-    Database() = delete;
+    Database();
     Database(const Database&) = delete;
+    Database(const Database&&) = delete;
     ~Database();
 
     pqxx::connection* conn;

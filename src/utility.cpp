@@ -1,17 +1,14 @@
 #include "utility.h"
 #include "bot.h"
-#include "input.h"
-#include "language.h"
-#include "logger.h"
 #include <dpp/fmt/format.h>
 #include <random>
 
-const char* bool_string(bool b) noexcept
+const char* btostr(bool b) noexcept
 {
     return b ? "Yes" : "Nope";
 }
 
-bool icon_empty(const dpp::utility::iconhash& ih) noexcept
+bool isempty(const dpp::utility::iconhash& ih) noexcept
 {
     return (ih.first == 0) & (ih.second == 0);
 }
@@ -36,41 +33,6 @@ int random(int from, int to) noexcept
     static std::mt19937 rng(dev());
     std::uniform_int_distribution<> dist(from, to);
     return dist(rng);
-}
-
-struct RequestProxy
-{
-    short tries;
-    Input input;
-    req_cb_t cb;
-
-    void operator()(const dpp::http_request_completion_t& res) const
-    {
-        switch (res.status) {
-        case 404:
-            return input.edit_reply(_(input->lang_id, CMD_ERR_REQUEST_NOT_FOUND));
-        case 301:
-        case 302:
-            return request(res.headers.at("location"), dpp::m_get, input, cb, tries + 1);
-        case 200:
-            return cb(input, res);
-        default:
-            input.edit_reply(_(input->lang_id, CMD_ERR_CONN_FAILURE));
-            log_err("REQUEST_PROXY", "Err: " + std::to_string(res.status));
-            return;
-        }
-    }
-};
-
-void request(const std::string& u,
-             dpp::http_method m,
-             const Input& input,
-             const req_cb_t cb,
-             short tries)
-{
-    if (!tries) input.defer();
-    (tries < 10) ? Bot::instance().request(u, m, RequestProxy {tries, input, cb})
-                 : throw std::runtime_error("Too much redirect");
 }
 
 constexpr const char* WEBHOOK_PAYLOAD = R"({{
@@ -110,8 +72,8 @@ void send_webhook(uint64_t channel_id,
             w.name       = "chadpp";
             w.type       = dpp::w_incoming;
             w.channel_id = channel_id;
-            bot.create_webhook(w, [&bot, payload = std::move(payload)](
-                                      const dpp::confirmation_callback_t& res) {
+            bot.create_webhook(w, [&bot, payload = std::move(payload)]
+                                  (const dpp::confirmation_callback_t& res) {
                 const dpp::webhook& wh = std::get<dpp::webhook>(res.value);
                 post_rest(&bot, wh.id, wh.token, payload);
             });

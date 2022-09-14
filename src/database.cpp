@@ -2,10 +2,14 @@
 #include "logger.h"
 #include <condition_variable>
 #include <dpp/fmt/format.h>
+#include <exception>
+#include <pqxx/connection.hxx>
 #include <pqxx/nontransaction.hxx>
 #include <pqxx/pqxx>
 #include <queue>
 #include <thread>
+
+extern char* conn_string;
 
 struct Query_request
 {
@@ -24,8 +28,9 @@ static pqxx::result start_query(pqxx::connection* conn, const std::string& query
     return w.exec(query);
 }
 
-Database::Database(pqxx::connection* c) : conn(c), terminating(false)
+Database::Database() : terminating(false)
 {
+    conn = new pqxx::connection(conn_string);
     thread = std::thread(&Database::_worker, this);
 }
 
@@ -48,7 +53,7 @@ void Database::_worker()
                 lock.lock();
             }
         } catch (pqxx::failure& e) {
-            log_err("DATABASE", fmt::format("PQXX Failure: {}", e.what()));
+            log_err("DATABASE", std::string("PQXX Failure: ") + e.what());
         } catch (std::exception& e) {
             log_err("DATABASE", e.what());
         }
@@ -75,4 +80,5 @@ Database::~Database()
     terminating = true;
     cv.notify_all();
     thread.join();
+    delete conn;
 }

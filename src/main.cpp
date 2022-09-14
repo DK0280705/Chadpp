@@ -1,10 +1,7 @@
 #include "bot.h"
 #include "database.h"
 #include "logger.h"
-#include "module.h"
 #include <exception>
-#include <future>
-#include <stdexcept>
 
 constexpr const char* EXIT_MESSAGE = "Terminating...";
 
@@ -18,21 +15,39 @@ static char* env(const char* key)
     return e;
 }
 
-static inline void ltrim(std::string &s) {
+static inline void ltrim(std::string &s) 
+{
     s.erase(s.begin(), std::find_if(s.begin(), s.end(), [](unsigned char ch) {
         return !std::isspace(ch);
     }));
 }
 
-static inline void rtrim(std::string &s) {
+static inline void rtrim(std::string &s)
+{
     s.erase(std::find_if(s.rbegin(), s.rend(), [](unsigned char ch) {
         return !std::isspace(ch);
     }).base(), s.end());
 }
 
-static inline void trim(std::string &s) {
+static inline void trim(std::string &s)
+{
     ltrim(s);
     rtrim(s);
+}
+
+static void init_sql(pqxx::connection& conn, std::ifstream& file)
+{
+    log_info("DATABASE", "Database started!\n  DBName\t: " + std::string(conn.dbname()) +
+                                 "\n  PID\t\t: " + std::to_string(conn.backendpid()));
+    file.seekg(0, std::ios::end);
+    const size_t size = file.tellg();
+    std::string sql(size, ' ');
+    file.seekg(0);
+    file.read(&sql[0], size);
+
+    pqxx::work w(conn);
+    w.exec(sql);
+    w.commit();
 }
 
 int main()
@@ -58,38 +73,24 @@ int main()
         return 1;
     }
 
-    std::ifstream sql_file("chadpp.sql");
-    if (!sql_file) {
+    Database db;
+
+    std::ifstream file("chadpp.sql");
+    if (!file) {
         log_err("DATABASE", "chadpp.sql file not found");
         return 1;
     }
 
+    if (db.conn->is_open()) {
+        init_sql(*db.conn, file);
+    } else {
+        log_err("DATABASE", "Error on opening database, make sure PostgreSQL Server is running");
+        return 1;
+    }
+
     try {
-        pqxx::connection conn(conn_string);
-
-        if (conn.is_open()) {
-            log_info("DATABASE", "Database started!\n  DBName\t: " + std::string(conn.dbname()) +
-                                     "\n  PID\t\t: " + std::to_string(conn.backendpid()));
-
-            sql_file.seekg(0, std::ios::end);
-            const size_t size = sql_file.tellg();
-            std::string sql(size, ' ');
-            sql_file.seekg(0);
-            sql_file.read(&sql[0], size);
-
-            pqxx::work w(conn);
-            w.exec(sql);
-            w.commit();
-        } else {
-            log_err("DATABASE",
-                    "Error on opening database, make sure PostgreSQL Server is running");
-            return 1;
-        }
-
-        Database db(&conn);
-
         Bot& bot = Bot::instance();
-
+         
         bot.database      = &db;
         bot.botlog_id     = values[0];
         bot.owner_id      = values[1];
