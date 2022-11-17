@@ -18,9 +18,11 @@ void Command_sudo::call(const Input& input) const
     else input.reply(dpp::message(0, "Done!").set_flags(dpp::m_ephemeral));
 
     const dpp::resolved_user& u = std::get<dpp::resolved_user>(input[0]);
-    const std::string avatar    = isempty(u.member.avatar) ? u.user.get_avatar_url()
+
+    const std::string avatar = isempty(u.member.avatar) ? u.user.get_avatar_url()
                                                            : u.member.get_avatar_url();
-    const std::string name      = u.member.nickname.empty() ? u.user.username : u.member.nickname;
+
+    const std::string name = u.member.nickname.empty() ? u.user.username : u.member.nickname;
 
     send_webhook(input->channel_id, name, avatar, std::get<std::string>(input[1]));
 }

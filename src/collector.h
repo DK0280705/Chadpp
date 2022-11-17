@@ -22,30 +22,30 @@ public:
               uint64_t duration = DEFAULT_COLLECTOR_TIMEOUT,
               bool store_item   = true,
               bool auto_reset   = true)
-        : mutex(new std::mutex), bot_(bot), duration_(duration), auto_reset_(auto_reset), store_item_(store_item)
+        : mutex(std::mutex()), bot_(bot), duration_(duration), auto_reset_(auto_reset), store_item_(store_item)
     {
         _timer = bot_->start_timer(_Delete {this}, duration_);
     }
 
     bool terminating = false;
-    mutable std::mutex* mutex;
+    mutable std::mutex mutex;
 
     void destroy()
     {
         {
-            std::lock_guard lock(*mutex);
+            std::lock_guard lock(mutex);
             on_end(_stored);
         }
     };
 
     void execute(const T& item)
     {
-        if (mutex->try_lock()) {
+        if (mutex.try_lock()) {
             if (on_collect(item)) {
                 if (store_item_) _stored.emplace_back(item);
                 if (auto_reset_) time_reset();
             }
-            mutex->unlock();
+            mutex.unlock();
         }
         if (terminating) destroy();
     }
@@ -63,7 +63,6 @@ public:
     virtual ~Collector() { 
         bot_->stop_timer(_timer);
         if (!terminating) destroy();
-        delete mutex;
     }
 
 protected:
